@@ -17,4 +17,16 @@
  :aliases
  {:main
   {:jvm-opts ["-Dclojure.core.async.pool-size=1" "-Dclojure.compiler.direct-linking=true"]
-   :main-opts ["-m" "find.main"]}}}
+   :main-opts ["-m" "find.main"]}
+
+  :repl
+  {:extra-deps {expanse/deps-repl {:git/url "https://github.com/empire-strikes-back/expanse"
+                                   :deps/root "./deps-repl"
+                                   :sha "b6a64233659f8ac859afea61cee1167c836b4c88"}
+                nrepl/nrepl {:mvn/version "0.8.3"}
+                cider/cider-nrepl {:mvn/version "0.25.5"}}
+   :main-opts ["-m" "expanse.deps-repl.main"
+               "--init-ns" "get-to-the-ship.main"
+               "--port" "7788"
+               "--bind" "0.0.0.0"
+               "--middleware" "cider.nrepl/cider-middleware"]}}}
