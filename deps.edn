@@ -35,7 +35,7 @@
                 nrepl/nrepl {:mvn/version "0.8.3"}
                 cider/cider-nrepl {:mvn/version "0.25.5"}}
    :main-opts ["-m" "expanse.deps-repl.main"
-               "--init-ns" "get-to-the-ship.main"
+               "--init-ns" "find.main"
                "--port" "7788"
                "--bind" "0.0.0.0"
                "--middleware" "cider.nrepl/cider-middleware"]}}}
