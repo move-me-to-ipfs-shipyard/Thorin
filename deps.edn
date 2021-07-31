@@ -12,7 +12,16 @@
         manifold/manifold {:mvn/version "0.1.9-alpha3"}
         github.cljfx/cljfx {:git/url "https://github.com/cljfx/cljfx"
                             :sha "ec3c34e619b2408026b9f2e2ff8665bebf70bf56"}
-        io.replikativ/datahike {:mvn/version "0.3.6"}}
+        io.replikativ/datahike {:mvn/version "0.3.6"}
+
+        expanse/fs-jvm {:local/root "../expanse/fs-jvm"}
+        expanse/bytes-jvm {:local/root "../expanse/bytes-jvm"}
+        expanse/codec-jvm {:local/root "../expanse/codec-jvm"}
+        expanse/bencode-jvm {:local/root "../expanse/bencode-jvm"}
+        expanse/bittorrent-jvm {:local/root "../expanse/bittorrent-jvm"}
+        expanse/transit-jvm {:local/root "../expanse/transit-jvm"}
+        expanse/socket-jvm {:local/root "../expanse/socket-jvm"}
+        expanse/datagram-socket-jvm {:local/root "../expanse/datagram-socket-jvm"}}
 
  :aliases
  {:main
