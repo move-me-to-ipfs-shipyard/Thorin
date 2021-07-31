@@ -19,5 +19,4 @@ i am find program - i search and download torrent files
 - compile - i compile without docker, on operating system - with jpackage, i require jvm, clj
 - run - i run with bash program.sh main
 - no plugins, no extensions - i, find, am exactly program who searches and downloads torrent files
-- resources  - i have no resources, all my files are in src/find
 - i am program - i'm simple, entirely free, open source, i have no barriers ratio-limits ads donations rewards economies links - i am program and i do my thing, like transmission on linux
