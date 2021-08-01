@@ -20,12 +20,11 @@
    :main-opts ["-m" "find.main"]}
 
   :repl
-  {:extra-deps {expanse/deps-repl {:git/url "https://github.com/empire-strikes-back/expanse"
-                                   :deps/root "./deps-repl"
-                                   :sha "b6a64233659f8ac859afea61cee1167c836b4c88"}
+  {:extra-deps {deps-repl/deps-repl {:git/url "https://github.com/empire-strikes-back/deps-repl"
+                                     :sha "24266c05ce16c27ec3464ae6453b931aa0398a1b"}
                 nrepl/nrepl {:mvn/version "0.8.3"}
                 cider/cider-nrepl {:mvn/version "0.25.5"}}
-   :main-opts ["-m" "expanse.deps-repl.main"
+   :main-opts ["-m" "deps-repl.main"
                "--init-ns" "find.main"
                "--port" "7788"
                "--bind" "0.0.0.0"
