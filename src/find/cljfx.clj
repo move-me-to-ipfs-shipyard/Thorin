@@ -25,7 +25,7 @@
    #_:on-close-request #_(fn [^WindowEvent event]
                            (println :on-close-request)
                            #_(.consume event))
-   :icons [(str (io/resource "icon256x256.png"))]
+   :icons [(str (io/resource "logo-728.png"))]
    :width 1024
    :height 768
    :scene {:fx/type :scene
