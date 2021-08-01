@@ -11,7 +11,7 @@ i am find program - i search and download torrent files
 - i do download files
 - language - my language is clojure
 - installation - i am a desktop program
-- binaries - my repository has releases of binaries
+- binaries - my repository has releases of binaries releases
 - runtime - i run on jvm, i will not be graalvm compiled, i'm not on Jesus level
 - interface - i use cljfx
 - system tray - i say no, i run in foreground
