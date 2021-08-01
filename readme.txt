@@ -20,5 +20,21 @@ i am find program - i search and download torrent files
 - compile - i compile without docker, on operating system - with jpackage, i require jvm, clj
 - run - i run with bash program.sh main
 - no plugins, no extensions - i, find, am exactly program who searches and downloads torrent files
+- issues - my repository has no issues or discussions, only my source code
+- attribution headers in files - i say no, i'm alive, only my source code
+- programmer names - i say no, i am find, my repository is my source code only
+- license files - i say no, my repository is only my source code
+- authors - i say no, my reposiotry is only my source code
+- authoring orgs, org links - i say no, my reposiotry is my source code only
+- docs - i say no: i am a program, i only have source code and readme with two sections - "i am program" and "compile from source"
+- tests - i say no
+- nesting - i say no, no dirs - all my files are flat on a single level: src/find
+- forbidden words - i forbid: refactor, fix, maintainer, archive, trash, helper, util, controller/manager, update, wrap, factory, play with,etc, misc, cleanup, service, org, test, alpha, client, impl
+- releases - i say no: my commit hashes define me
+- updates and update notifications - i say no
+- git - i have one branch - main, i have no git tags
+- commit history - i have no git history - my source files define me
 - resources  - i have no resources, all my files are in src/find
+- pull requests - i accept no github pull requests - i have no public programmers
+- programmer names or emails in commit history - i say no, i am alive, my repository is my source code only
 - i am program - i'm simple, entirely free, open source, i have no barriers ratio-limits ads donations rewards economies links - i am program and i do my thing, like transmission on linux
