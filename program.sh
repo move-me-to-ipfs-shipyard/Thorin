@@ -29,12 +29,12 @@ j-package(){
   echo "Starting build..."
 
   if [ "$OS" == "windows" ]; then
-    J_ARG="--win-menu --win-dir-chooser --win-shortcut --icon resources/icon.ico"
+    J_ARG="--win-menu --win-dir-chooser --win-shortcut"
           
   elif [ "$OS" == "linux" ]; then
-      J_ARG="--linux-shortcut --icon resources/icon256x256.png"
+      J_ARG="--linux-shortcut"
   else
-      J_ARG="--icon resources/icon.icns"
+      J_ARG=""
   fi
 
   APP_VERSION=0.1.0
