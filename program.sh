@@ -10,17 +10,8 @@ main(){
 
 uberjar(){
 
-  # clojure -X:depstar uberjar \
-  #   :aot true \
-  #   :jar target/find.standalone.jar \
-  #   :verbose false \
-  #   :main-class find.main
-
-
-  lein with-profiles +prod uberjar
   mkdir -p target/jpackage-input
   mv target/find.standalone.jar target/jpackage-input/
-  #  java -Dclojure.core.async.pool-size=1 -jar target/find-standalone.jar
 }
 
 j-package(){
