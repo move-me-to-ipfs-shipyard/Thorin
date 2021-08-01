@@ -1,4 +1,4 @@
-(ns expanse.bittorrent.ut-metadata
+(ns find.ut-metadata
   (:require
    [clojure.core.async :as a :refer [chan go go-loop <! >!  take! put! offer! poll! alt! alts! close! onto-chan!
                                      pub sub unsub mult tap untap mix admix unmix pipe
@@ -6,24 +6,21 @@
                                      pipeline pipeline-async]]
    [clojure.string]
    [clojure.spec.alpha :as s]
-   [expanse.bytes.spec :as bytes.spec]
-   [expanse.bytes.runtime.core :as bytes.runtime.core]
-   [expanse.codec.runtime.core :as codec.runtime.core]
-   [expanse.bencode.core :as bencode.core]
-   [expanse.bittorrent.spec :as bittorrent.spec]
+   [find.bytes]
+   [find.codec]
+   [find.bencode]
+   [find.spec :as find.spec]
    [clojure.walk :refer [keywordize-keys]]))
 
-#?(:clj (do (set! *warn-on-reflection* true) (set! *unchecked-math* true)))
+(do (set! *warn-on-reflection* true) (set! *unchecked-math* true))
 
 (defprotocol WireProtocol)
 
 (s/def ::wire-protocol #(and
                          (satisfies? WireProtocol %)
-                         #?(:clj (instance? clojure.lang.IDeref %))
-                         #?(:cljs (satisfies? cljs.core/IDeref %))))
+                         (instance? clojure.lang.IDeref %)))
 
-(s/def ::channel #?(:clj #(instance? clojure.core.async.impl.channels.ManyToManyChannel %)
-                    :cljs #(instance? cljs.core.async.impl.channels/ManyToManyChannel %)))
+(s/def ::channel #(instance? clojure.core.async.impl.channels.ManyToManyChannel %))
 
 (s/def ::recv| ::channel)
 (s/def ::send| ::channel)
@@ -52,23 +49,23 @@
                                   (->
                                    @buffersV
                                    (persistent!)
-                                   (bytes.runtime.core/concat)))]
+                                   (find.bytes/concat)))]
                     (vreset! buffersV (transient []))
                     (vreset! total-sizeV 0)
                     resultB)
 
                   (> total-size expected-size)
-                  (let [overB (bytes.runtime.core/concat (persistent! @buffersV))
-                        resultB (bytes.runtime.core/buffer-wrap overB 0 expected-size)
-                        leftoverB (bytes.runtime.core/buffer-wrap overB expected-size (- total-size expected-size))]
+                  (let [overB (find.bytes/concat (persistent! @buffersV))
+                        resultB (find.bytes/buffer-wrap overB 0 expected-size)
+                        leftoverB (find.bytes/buffer-wrap overB expected-size (- total-size expected-size))]
                     (vreset! buffersV (transient [leftoverB]))
-                    (vreset! total-sizeV (bytes.runtime.core/capacity leftoverB))
+                    (vreset! total-sizeV (find.bytes/capacity leftoverB))
                     resultB)
 
                   :else
                   (when-let [recvB (<! recv|)]
                     (vswap! buffersV conj! recvB)
-                    (vreset! total-sizeV (+ total-size (bytes.runtime.core/capacity recvB)))
+                    (vreset! total-sizeV (+ total-size (find.bytes/capacity recvB)))
                     (recur))))))))))
 
 (defn buffer-cut
@@ -90,32 +87,32 @@
                           (->
                            buffersT
                            (persistent!)
-                           (bytes.runtime.core/concat)))]
+                           (find.bytes/concat)))]
             (>! to| resultBB)
             (recur (transient []) 0 (<! expected-size|)))
 
           (> total-size expected-size)
-          (let [overBB (bytes.runtime.core/concat (persistent! buffersT))
-                resultBB (bytes.runtime.core/buffer-slice overBB 0 expected-size)
-                leftoverBB (bytes.runtime.core/buffer-slice overBB expected-size (- total-size expected-size))]
+          (let [overBB (find.bytes/concat (persistent! buffersT))
+                resultBB (find.bytes/buffer-slice overBB 0 expected-size)
+                leftoverBB (find.bytes/buffer-slice overBB expected-size (- total-size expected-size))]
             (>! to| resultBB)
-            (recur (transient [leftoverBB]) (bytes.runtime.core/capacity leftoverBB) (<! expected-size|)))
+            (recur (transient [leftoverBB]) (find.bytes/capacity leftoverBB) (<! expected-size|)))
 
           :else
           (when-let [recvBB (<! from|)]
-            (recur (conj! buffersT recvBB) (+ total-size (bytes.runtime.core/capacity recvBB)) expected-size)))))
+            (recur (conj! buffersT recvBB) (+ total-size (find.bytes/capacity recvBB)) expected-size)))))
     (close! to|)))
 
-(def pstrlenBA (bytes.runtime.core/byte-array [19]))
-(def pstrBA (bytes.runtime.core/to-byte-array "BitTorrent protocol" #_"\u0013BitTorrent protocol"))
-(def reservedBA (bytes.runtime.core/byte-array [0 0 0 0 0 2r00010000 0 2r00000001]))
-(def keep-aliveBA (bytes.runtime.core/byte-array [0 0 0 0]))
-(def chokeBA (bytes.runtime.core/byte-array [0 0 0 1 0]))
-(def unchokeBA (bytes.runtime.core/byte-array [0 0 0 1 1]))
-(def interestedBA (bytes.runtime.core/byte-array [0 0 0 1 2]))
-(def not-interestedBA (bytes.runtime.core/byte-array [0 0 0 1 3]))
-(def haveBA (bytes.runtime.core/byte-array [0 0 0 5 4]))
-(def portBA (bytes.runtime.core/byte-array [0 0 0 3 9 0 0]))
+(def pstrlenBA (find.bytes/byte-array [19]))
+(def pstrBA (find.bytes/to-byte-array "BitTorrent protocol" #_"\u0013BitTorrent protocol"))
+(def reservedBA (find.bytes/byte-array [0 0 0 0 0 2r00010000 0 2r00000001]))
+(def keep-aliveBA (find.bytes/byte-array [0 0 0 0]))
+(def chokeBA (find.bytes/byte-array [0 0 0 1 0]))
+(def unchokeBA (find.bytes/byte-array [0 0 0 1 1]))
+(def interestedBA (find.bytes/byte-array [0 0 0 1 2]))
+(def not-interestedBA (find.bytes/byte-array [0 0 0 1 3]))
+(def haveBA (find.bytes/byte-array [0 0 0 5 4]))
+(def portBA (find.bytes/byte-array [0 0 0 3 9 0 0]))
 
 (def ^:const ut-metadata-block-size 16384)
 (def ^:const ut-metadata-max-size 1000000)
@@ -124,26 +121,26 @@
   [ext-msg-id data]
   (let [payloadBA (->
                    data
-                   (bencode.core/encode))
-        msg-lengthBB (bytes.runtime.core/buffer-allocate 4)
-        msg-length (+ 2 (bytes.runtime.core/alength payloadBA))]
-    (bytes.runtime.core/put-uint32 msg-lengthBB 0 msg-length)
+                   (find.bencode/encode))
+        msg-lengthBB (find.bytes/buffer-allocate 4)
+        msg-length (+ 2 (find.bytes/alength payloadBA))]
+    (find.bytes/put-uint32 msg-lengthBB 0 msg-length)
     (->
-     (bytes.runtime.core/concat
-      [(bytes.runtime.core/to-byte-array msg-lengthBB)
-       (bytes.runtime.core/byte-array [20 ext-msg-id])
+     (find.bytes/concat
+      [(find.bytes/to-byte-array msg-lengthBB)
+       (find.bytes/byte-array [20 ext-msg-id])
        payloadBA]))))
 
 (defn handshake-msg
   [infohashBA peer-idBA]
-  (bytes.runtime.core/concat [pstrlenBA pstrBA reservedBA infohashBA peer-idBA]))
+  (find.bytes/concat [pstrlenBA pstrBA reservedBA infohashBA peer-idBA]))
 
 (s/def ::create-wire-opts
   (s/keys :req [::send|
                 ::recv|
                 ::metadata|
-                ::bittorrent.spec/infohashBA
-                ::bittorrent.spec/peer-idBA]
+                ::find.spec/infohashBA
+                ::find.spec/peer-idBA]
           :opt [::ex|]))
 
 (defn create
@@ -151,8 +148,8 @@
     :keys [::send|
            ::recv|
            ::metadata|
-           ::bittorrent.spec/infohashBA
-           ::bittorrent.spec/peer-idBA]}]
+           ::find.spec/infohashBA
+           ::find.spec/peer-idBA]}]
   {:pre [(s/assert ::create-wire-opts opts)]
    :post [(s/assert ::wire-protocol %)]}
   (let [stateV (volatile!
@@ -167,12 +164,8 @@
         ^{:type ::wire-protocol}
         (reify
           WireProtocol
-          #?@(:clj
-              [clojure.lang.IDeref
-               (deref [_] @stateV)]
-              :cljs
-              [cljs.core/IDeref
-               (-deref [_] @stateV)]))
+          clojure.lang.IDeref
+          (deref [_] @stateV))
 
         release (fn []
                   (close! expected-size|))]
@@ -218,7 +211,7 @@
             (condp = (:op stateT)
 
               :pstrlen
-              (let [pstrlen (bytes.runtime.core/get-uint8 msgBB 0)]
+              (let [pstrlen (find.bytes/get-uint8 msgBB 0)]
                 (recur (-> stateT
                            (assoc! :op :handshake)
                            (assoc! :pstrlen pstrlen)
@@ -226,24 +219,24 @@
 
               :handshake
               (let [{:keys [pstrlen]} stateT
-                    pstr (-> (bytes.runtime.core/buffer-slice msgBB 0 pstrlen) (bytes.runtime.core/to-string))]
+                    pstr (-> (find.bytes/buffer-slice msgBB 0 pstrlen) (find.bytes/to-string))]
                 (if-not (= pstr "BitTorrent protocol")
                   (throw (ex-info "Peer's protocol is not 'BitTorrent protocol'"  {:pstr pstr} nil))
-                  (let [reservedBB (bytes.runtime.core/buffer-slice msgBB pstrlen 8)
-                        infohashBB (bytes.runtime.core/buffer-slice msgBB (+ pstrlen 8) 20)
-                        peer-idBB (bytes.runtime.core/buffer-slice msgBB (+ pstrlen 28) 20)]
+                  (let [reservedBB (find.bytes/buffer-slice msgBB pstrlen 8)
+                        infohashBB (find.bytes/buffer-slice msgBB (+ pstrlen 8) 20)
+                        peer-idBB (find.bytes/buffer-slice msgBB (+ pstrlen 28) 20)]
                     #_(println :received-handshake)
                     (>! send| (extended-msg 0 {:m (:extensions stateT)
                                                #_:metadata_size #_1000}))
                     (recur (-> stateT
                                (assoc! :op :msg-length)
                                (assoc! :expected-size 4)
-                               (assoc! :peer-infohashBA (bytes.runtime.core/to-byte-array infohashBB))
-                               (assoc! :peer-extended? (not (== 0 (bit-and (bytes.runtime.core/get-uint8 reservedBB 5) 2r00010000))) )
-                               (assoc! :peer-dht? (not (== 0 (bit-and (bytes.runtime.core/get-uint8 reservedBB 7) 2r00000001)))))))))
+                               (assoc! :peer-infohashBA (find.bytes/to-byte-array infohashBB))
+                               (assoc! :peer-extended? (not (== 0 (bit-and (find.bytes/get-uint8 reservedBB 5) 2r00010000))) )
+                               (assoc! :peer-dht? (not (== 0 (bit-and (find.bytes/get-uint8 reservedBB 7) 2r00000001)))))))))
 
               :msg-length
-              (let [msg-length (bytes.runtime.core/get-uint32 msgBB 0)]
+              (let [msg-length (find.bytes/get-uint32 msgBB 0)]
                 (if (== 0 msg-length) #_:keep-alive
                     (do
                       (recur stateT))
@@ -257,7 +250,7 @@
                                (assoc! :op :msg-length)
                                (assoc! :expected-size 4))
                     {:keys [msg-length]} stateT
-                    msg-id (bytes.runtime.core/get-uint8 msgBB 0)]
+                    msg-id (find.bytes/get-uint8 msgBB 0)]
 
                 (cond
 
@@ -283,7 +276,7 @@
 
                   #_:have
                   (and (== msg-id 4) (== msg-length 5))
-                  (let [piece-index (bytes.runtime.core/get-uint32 msgBB 1)]
+                  (let [piece-index (find.bytes/get-uint32 msgBB 1)]
                     (recur stateT))
 
                   #_:bitfield
@@ -292,16 +285,16 @@
 
                   #_:request
                   (and (== msg-id 6) (== msg-length 13))
-                  (let [index (bytes.runtime.core/get-uint32 msgBB 1)
-                        begin (bytes.runtime.core/get-uint32 msgBB 5)
-                        length (bytes.runtime.core/get-uint32 msgBB 9)]
+                  (let [index (find.bytes/get-uint32 msgBB 1)
+                        begin (find.bytes/get-uint32 msgBB 5)
+                        length (find.bytes/get-uint32 msgBB 9)]
                     (recur stateT))
 
                   #_:piece
                   (== msg-id 7)
-                  (let [index (bytes.runtime.core/get-uint32 msgBB 1)
-                        begin (bytes.runtime.core/get-uint32 msgBB 5)
-                        blockBB (bytes.runtime.core/buffer-slice msgBB 9 (- msg-length 9))]
+                  (let [index (find.bytes/get-uint32 msgBB 1)
+                        begin (find.bytes/get-uint32 msgBB 5)
+                        blockBB (find.bytes/buffer-slice msgBB 9 (- msg-length 9))]
                     (recur stateT))
 
                   #_:cancel
@@ -314,13 +307,13 @@
 
                   #_:extended
                   (and (== msg-id 20))
-                  (let [ext-msg-id (bytes.runtime.core/get-uint8 msgBB 1)
-                        payloadBB (bytes.runtime.core/buffer-slice msgBB 2 (- msg-length 2))]
+                  (let [ext-msg-id (find.bytes/get-uint8 msgBB 1)
+                        payloadBB (find.bytes/buffer-slice msgBB 2 (- msg-length 2))]
                     (cond
 
                       #_:handshake
                       (== ext-msg-id 0)
-                      (let [data (-> (bytes.runtime.core/to-byte-array payloadBB) (bencode.core/decode) (keywordize-keys))]
+                      (let [data (-> (find.bytes/to-byte-array payloadBB) (find.bencode/decode) (keywordize-keys))]
                         (let  [ut-metadata-id (get-in data [:m :ut_metadata])
                                metadata_size (get data :metadata_size)]
                           #_(println :received-extened-handshake (:m data) metadata_size)
@@ -345,10 +338,10 @@
                                    (assoc! :ut-metadata-max-rejects 2 #_(-> (/ metadata_size ut-metadata-block-size) (int) (+ 1))))))
 
                       (== ext-msg-id 3 #_(get-in stateT [:extensions "ut-metadata"]) #_(get-in stateT [:peer-extended-data "m" "ut_metadata"]))
-                      (let [payload-str (bytes.runtime.core/to-string payloadBB)
+                      (let [payload-str (find.bytes/to-string payloadBB)
                             block-index (-> (clojure.string/index-of payload-str "ee") (+ 2))
                             data-str (subs payload-str 0 block-index)
-                            data  (-> data-str (bytes.runtime.core/to-byte-array) (bencode.core/decode) (keywordize-keys))]
+                            data  (-> data-str (find.bytes/to-byte-array) (find.bencode/decode) (keywordize-keys))]
                         #_(println :ext-msg-id-3 data)
                         (condp == (:msg_type data)
 
@@ -364,16 +357,16 @@
                           #_:data
                           1
                           (let [blockBA (-> payloadBB
-                                            (bytes.runtime.core/buffer-slice block-index (- (bytes.runtime.core/capacity payloadBB) block-index))
-                                            (bytes.runtime.core/to-byte-array))  #_(-> payload-str (subs block-index) (bytes.runtime.core/to-byte-array))
+                                            (find.bytes/buffer-slice block-index (- (find.bytes/capacity payloadBB) block-index))
+                                            (find.bytes/to-byte-array))  #_(-> payload-str (subs block-index) (find.bytes/to-byte-array))
                                 ut-metadata-size (get-in stateT [:peer-extended-data :metadata_size])
-                                downloaded (+ (:ut-metadata-downloaded stateT) (bytes.runtime.core/alength blockBA))]
-                            #_(println ::got-piece data downloaded (bytes.runtime.core/alength blockBA))
+                                downloaded (+ (:ut-metadata-downloaded stateT) (find.bytes/alength blockBA))]
+                            #_(println ::got-piece data downloaded (find.bytes/alength blockBA))
                             (cond
                               (== downloaded ut-metadata-size)
-                              (let [metadataBA (bytes.runtime.core/concat (persistent! (conj! (:ut-metadata-pieces stateT) blockBA)))
-                                    metadata-hash (-> (bytes.runtime.core/sha1 metadataBA) (codec.runtime.core/hex-to-string))
-                                    peer-infohash (-> (:peer-infohashBA stateT) (codec.runtime.core/hex-to-string))]
+                              (let [metadataBA (find.bytes/concat (persistent! (conj! (:ut-metadata-pieces stateT) blockBA)))
+                                    metadata-hash (-> (find.bytes/sha1 metadataBA) (find.codec/hex-to-string))
+                                    peer-infohash (-> (:peer-infohashBA stateT) (find.codec/hex-to-string))]
                                 (if-not (= metadata-hash peer-infohash)
                                   (throw (ex-info "metadata hash differs from peer's infohash" {} nil))
                                   (>! metadata| metadataBA))
@@ -423,7 +416,7 @@
                     #_(println [::unknown-message :msg-id msg-id :msg-length msg-length])
                     (recur stateT)))))))
 
-        (catch #?(:clj Exception :cljs :default) ex (put! ex| ex)))
+        (catch Exception ex (put! ex| ex)))
       (release))
 
     wire-protocol))
@@ -461,8 +454,8 @@
                                       pub sub unsub mult tap untap mix admix unmix pipe
                                       timeout to-chan  sliding-buffer dropping-buffer
                                       pipeline pipeline-async]]
-   '[expanse.bytes.runtime.core :as bytes.runtime.core]
-   '[expanse.bencode.core :as bencode.core]
+   '[find.bytes]
+   '[find.bencode]
    '[expanse.bittorrent.wire-protocol.core :as wire-protocol.core]
    :reload #_:reload-all)
   
@@ -473,8 +466,8 @@
 (comment
 
 
-  (bytes.runtime.core/get-uint32 (bytes.runtime.core/buffer-wrap (bytes.runtime.core/byte-array [0 0 0 5])) 0)
-  (bytes.runtime.core/get-uint32 (bytes.runtime.core/buffer-wrap (bytes.runtime.core/byte-array [0 0 1 3])) 0)
+  (find.bytes/get-uint32 (find.bytes/buffer-wrap (find.bytes/byte-array [0 0 0 5])) 0)
+  (find.bytes/get-uint32 (find.bytes/buffer-wrap (find.bytes/byte-array [0 0 1 3])) 0)
 
 
   ; The bit selected for the extension protocol is bit 20 from the right (counting starts at 0) . 
@@ -483,17 +476,17 @@
   ; => 16
 
   (->
-   (bytes.runtime.core/buffer-allocate 4)
-   (bytes.runtime.core/put-int 0 16384)
-   (bytes.runtime.core/get-int 0))
+   (find.bytes/buffer-allocate 4)
+   (find.bytes/put-int 0 16384)
+   (find.bytes/get-int 0))
 
-  (let [byte-buf  (bytes.runtime.core/buffer-allocate 4)
-        _ (bytes.runtime.core/put-int byte-buf 0 16384)
-        byte-arr (bytes.runtime.core/to-byte-array byte-buf)]
-    [(bytes.runtime.core/alength byte-arr)
+  (let [byte-buf  (find.bytes/buffer-allocate 4)
+        _ (find.bytes/put-int byte-buf 0 16384)
+        byte-arr (find.bytes/to-byte-array byte-buf)]
+    [(find.bytes/alength byte-arr)
      (-> byte-arr
-         (bytes.runtime.core/buffer-wrap)
-         (bytes.runtime.core/get-uint32 0))])
+         (find.bytes/buffer-wrap)
+         (find.bytes/get-uint32 0))])
 
 
   ;

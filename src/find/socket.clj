@@ -1,4 +1,4 @@
-(ns expanse.socket.runtime.core
+(ns find.socket
   (:require
    [clojure.core.async :as a :refer [chan go go-loop <! >!  take! put! offer! poll! alt! alts! close! onto-chan!
                                      pub sub unsub mult tap untap mix admix unmix pipe
@@ -7,9 +7,9 @@
    [clojure.core.async.impl.protocols :refer [closed?]]
    [clojure.spec.alpha :as s]
 
-   [expanse.bytes.runtime.core :as bytes.runtime.core]
-   [expanse.socket.spec :as socket.spec]
-   [expanse.socket.protocols :as socket.protocols]
+   [find.bytes]
+   [find.spec :as find.spec]
+   [find.protocols]
 
    [manifold.deferred :as d]
    [manifold.stream :as sm]
@@ -25,29 +25,29 @@
 
 (s/def ::socket-stream #(instance? manifold.stream.SplicedStream %))
 
-(s/def ::opts (s/keys :req [::socket.spec/evt|
-                            ::socket.spec/msg|
-                            ::socket.spec/ex|]
-                      :opt [::socket.spec/port
-                            ::socket.spec/host
+(s/def ::opts (s/keys :req [::find.spec/evt|
+                            ::find.spec/msg|
+                            ::find.spec/ex|]
+                      :opt [::find.spec/port
+                            ::find.spec/host
                             ::socket-stream
                             ::ssl-handler]))
 
 (defn create
   [{:as opts
-    :keys [::socket.spec/port
-           ::socket.spec/host
+    :keys [::find.spec/port
+           ::find.spec/host
            ::socket-stream
-           ::socket.spec/evt|
-           ::socket.spec/msg|
-           ::socket.spec/ex|]}]
+           ::find.spec/evt|
+           ::find.spec/msg|
+           ::find.spec/ex|]}]
   {:pre [(s/assert ::opts opts)]
-   :post [(s/assert ::socket.spec/socket %)]}
+   :post [(s/assert ::find.spec/socket %)]}
   (let [streamV (volatile! nil)
         socket
-        ^{:type ::socket.spec/socket}
+        ^{:type ::find.spec/socket}
         (reify
-          socket.protocols/Socket
+          find.protocols/Socket
           (connect*
             [t]
             (->
@@ -78,14 +78,15 @@
                             (throw (ex-info (str ::socket-stream-closed) {} nil)))))))
                    (d/catch Exception (fn [ex]
                                         (put! ex| ex)
-                                        (socket.protocols/close* t)))))))
+                                        (find.protocols/close* t)))))))
              (d/catch Exception (fn [ex]
                                   (put! ex| ex)
-                                  (socket.protocols/close* t)))))
+                                  (find.protocols/close* t)))))
+          find.protocols/Send
           (send*
             [_ byte-arr]
             (sm/put! @streamV byte-arr))
-          socket.protocols/Close
+          find.protocols/Close
           (close*
             [_]
             (when-let [stream @streamV]
@@ -96,55 +97,6 @@
 
     socket))
 
-(s/def ::ssl-context #(instance? io.netty.handler.ssl.SslContext %))
-
-(s/def ::create-server-opts (s/keys :req [::socket.spec/port
-                                          ::socket.spec/host]
-                                    :opt [::ssl-context]))
-
-(defn create-server
-  [{:as opts
-    :keys [::socket.spec/port
-           ::socket.spec/host
-           ::socket.spec/evt|
-           ::socket.spec/connection|
-           ::socket.spec/ex|]
-    :or {host "0.0.0.0"
-         port 0}}]
-  (let [serverV (volatile! nil)
-        socket-server
-        ^{:type ::socket.spec/socket-server}
-        (reify
-          socket.protocols/SocketServer
-          (listen*
-            [t]
-            (try
-              (let [server (aleph.tcp/start-server
-                            (fn socket-server-handler
-                              [stream {:keys [remote-addr ssl-session server-port server-name] :as info}]
-                              (put! connection| {::socket.spec/socket
-                                                 (doto
-                                                  (create {::socket-stream stream
-                                                           ::socket.spec/evt| (chan (sliding-buffer 10))
-                                                           ::socket.spec/msg| (chan 100)
-                                                           ::socket.spec/ex| (chan 1)})
-                                                   (socket.protocols/connect*))
-                                                 :info info}))
-                            {:socket-address (InetSocketAddress. ^String host ^int port)})]
-                (vreset! serverV server)
-                (put! evt| {:op :listening}))
-              (catch Exception ex (do
-                                    (put! ex| ex)
-                                    (socket.protocols/close* t)))))
-          socket.protocols/Close
-          (close*
-            [_]
-            (when-let [server @serverV]
-              (.close ^java.io.Closeable server)))
-          clojure.lang.IDeref
-          (deref [_] @serverV))]
-
-    socket-server))
 
 (comment
 
@@ -168,33 +120,6 @@
   (def s (sm/stream))
   (sm/consume #(prn %) s)
   (sm/put! s 1)
-
-  ;
-  )
-
-
-(comment
-
-
-  (def server (aleph.tcp/start-server
-               (fn [stream info]
-                 (println (type stream)) ; manifold.stream.SplicedStream
-                 (println info) ; {:remote-addr 127.0.0.1, :ssl-session nil, :server-port 3000, :server-name localhost}
-                 )
-               {:port 3000}))
-
-  (def socket @(aleph.tcp/client {:host "localhost" :port 3000 :insecure? true}))
-
-  (instance? manifold.stream.SplicedStream socket)
-  ; true
-
-  (.close server)
-
-
-  (d/chain
-   {:foo 1}
-   (fn [x]
-     (println :x x)))
 
   ;
   )

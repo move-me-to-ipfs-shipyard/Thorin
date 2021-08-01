@@ -5,9 +5,9 @@
                                      timeout to-chan  sliding-buffer dropping-buffer
                                      pipeline pipeline-async]]
    [clojure.java.io :as io]
-   [expanse.bytes.runtime.core :as bytes.runtime.core]
-   [expanse.codec.runtime.core :as codec.runtime.core]
-   [expanse.bittorrent.spec :as bittorrent.spec]
+   [find.bytes]
+   [find.codec]
+   [find.spec :as find.spec]
    [datahike.api]
    [taoensso.timbre :as log]
    [taoensso.timbre.appenders.3rd-party.rotor]))
@@ -27,9 +27,9 @@
 
   (require
    '[find.db :as find.db]
-   '[expanse.bytes.runtime.core :as bytes.runtime.core]
-   '[expanse.codec.runtime.core :as codec.runtime.core]
-   '[expanse.bittorrent.spec :as bittorrent.spec]
+   '[find.bytes]
+   '[find.codec]
+   '[find.spec :as find.spec]
    '[datahike.api]
    :reload)
 
@@ -81,16 +81,16 @@
 
 (comment
 
-  (datahike.api/transact conn [{:db/ident ::bittorrent.spec/infohash
+  (datahike.api/transact conn [{:db/ident ::find.spec/infohash
                                 :db/valueType :db.type/string
                                 :db/cardinality :db.cardinality/one}
-                               {:db/ident ::bittorrent.spec/metadata
+                               {:db/ident ::find.spec/metadata
                                 :db/valueType :db.type/ref
                                 :db/cardinality :db.cardinality/one}
-                               {:db/ident ::bittorrent.spec/name
+                               {:db/ident ::find.spec/name
                                 :db/valueType :db.type/string
                                 :db/cardinality :db.cardinality/one}
-                               {:db/ident ::bittorrent.spec/files
+                               {:db/ident ::find.spec/files
                                 :db/valueType :db.type/ref
                                 :db/cardinality :db.cardinality/many}])
 
@@ -100,18 +100,18 @@
        (println :n n))
      (datahike.api/transact conn (map
                                   (fn [i]
-                                    {::bittorrent.spec/infohash (-> (bytes.runtime.core/random-bytes 20) (codec.runtime.core/hex-to-string))
-                                     ::bittorrent.spec/metadata
-                                     {::bittorrent.spec/name (str "some torrent name details 12312312 foo bar " n "," i)
-                                      ::bittorrent.spec/files (map (fn [j]
-                                                                     {::bittorrent.spec/name (str "some file name details 12312312 foo bar " j)}) (range 0 10))}})
+                                    {::find.spec/infohash (-> (find.bytes/random-bytes 20) (find.codec/hex-to-string))
+                                     ::find.spec/metadata
+                                     {::find.spec/name (str "some torrent name details 12312312 foo bar " n "," i)
+                                      ::find.spec/files (map (fn [j]
+                                                                     {::find.spec/name (str "some file name details 12312312 foo bar " j)}) (range 0 10))}})
                                   (range 100)))
      nil))
 
   (->
    (datahike.api/q '[:find ?e ?infohash
                      :where
-                     [?e ::bittorrent.spec/infohash ?infohash]]
+                     [?e ::find.spec/infohash ?infohash]]
                    @conn)
    (count))
   

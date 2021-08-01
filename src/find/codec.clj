@@ -1,4 +1,4 @@
-(ns expanse.codec.runtime.core
+(ns find.codec
   (:import
    (io.netty.buffer ByteBufUtil)
    #_(org.apache.commons.codec.binary Hex)))
@@ -29,12 +29,12 @@
                                                 timeout to-chan  sliding-buffer dropping-buffer
                                                 pipeline pipeline-async]])
     (require '[expanse.codec.core :as codec.core])
-    (require '[expanse.bytes.runtime.core :as bytes.runtime.core])
+    (require '[find.bytes])
     (import (io.netty.buffer ByteBufUtil)))
   
   
   
-  (let [hex (ByteBufUtil/hexDump (bytes.runtime.core/random-bytes 20))]
+  (let [hex (ByteBufUtil/hexDump (find.bytes/random-bytes 20))]
     (= hex
        (ByteBufUtil/hexDump (ByteBufUtil/decodeHexDump hex))))
   

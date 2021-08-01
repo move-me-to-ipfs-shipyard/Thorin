@@ -10,14 +10,14 @@
    [clojure.string]
    [clojure.walk]
 
-   [expanse.bytes.runtime.core :as bytes.runtime.core]
-   [expanse.codec.runtime.core :as codec.runtime.core]
-   [expanse.socket.runtime.core :as socket.runtime.core]
-   [expanse.socket.spec :as socket.spec]
-   [expanse.socket.protocols :as socket.protocols]
-   [expanse.bencode.core :as bencode.core]
-   [expanse.bittorrent.ut-metadata :as bittorrent.ut-metadata]
-   [expanse.bittorrent.spec :as bittorrent.spec]
+   [find.bytes]
+   [find.codec]
+   [find.socket]
+   [find.spec :as find.spec]
+   [find.protocols]
+   [find.bencode]
+   [find.ut-metadata]
+   [find.spec :as find.spec]
    [find.seed]))
 
 (do (set! *warn-on-reflection* true) (set! *unchecked-math* true))
@@ -33,7 +33,7 @@
           evt| (chan (sliding-buffer 10))
           msg| (chan 100
                      (map (fn [byte-arr]
-                            (bytes.runtime.core/buffer-wrap byte-arr))))
+                            (find.bytes/buffer-wrap byte-arr))))
 
           send| (chan 100)
 
@@ -43,29 +43,29 @@
 
           socket-ex| (chan 1)
 
-          socket (socket.runtime.core/create
-                  {::socket.spec/port port
-                   ::socket.spec/host host
-                   ::socket.spec/evt| evt|
-                   ::socket.spec/msg| msg|
-                   ::socket.spec/ex| socket-ex|})
+          socket (find.socket/create
+                  {::find.spec/port port
+                   ::find.spec/host host
+                   ::find.spec/evt| evt|
+                   ::find.spec/msg| msg|
+                   ::find.spec/ex| socket-ex|})
 
           release (fn []
                     (swap! count-socketsA dec)
-                    (socket.protocols/close* socket)
+                    (find.protocols/close* socket)
                     (close! msg|)
                     (close! socket-ex|)
                     (close! send|)
                     (close! evt|)
                     (close! recv|))]
 
-      (bittorrent.ut-metadata/create
-       {::bittorrent.spec/send| send|
-        ::bittorrent.spec/recv| recv|
-        ::bittorrent.spec/metadata| result|
-        ::bittorrent.spec/ex| ex|
-        ::bittorrent.spec/infohashBA infohashBA
-        ::bittorrent.spec/peer-idBA idBA})
+      (find.ut-metadata/create
+       {::find.spec/send| send|
+        ::find.spec/recv| recv|
+        ::find.spec/metadata| result|
+        ::find.spec/ex| ex|
+        ::find.spec/infohashBA infohashBA
+        ::find.spec/peer-idBA idBA})
 
       (go
         (when-let [evt (<! evt|)]
@@ -80,11 +80,11 @@
             send|
             ([value]
              (when value
-               (socket.protocols/send* socket value)
+               (find.protocols/send* socket value)
                (recur)))
             :priority true)))
       (swap! count-socketsA inc)
-      (socket.protocols/connect* socket)
+      (find.protocols/connect* socket)
 
       (go
         (loop []
@@ -123,14 +123,14 @@
         result|
         ([metadataBA]
          (let [metadata (->
-                         (bencode.core/decode metadataBA)
+                         (find.bencode/decode metadataBA)
                          (clojure.walk/keywordize-keys)
                          (select-keys [:name :files :name.utf-8 :length])
                          (->> (clojure.walk/postwalk
                                (fn [form]
                                  (cond
-                                   (bytes.runtime.core/byte-array? form)
-                                   (bytes.runtime.core/to-string form)
+                                   (find.bytes/byte-array? form)
+                                   (find.bytes/to-string form)
 
                                    :else form)))))]
            (release)
@@ -179,7 +179,7 @@
                            (go
                              (alt!
                                (send-krpc-request
-                                {:t (bytes.runtime.core/random-bytes 4)
+                                {:t (find.bytes/random-bytes 4)
                                  :y "q"
                                  :q "get_peers"
                                  :a {:id self-idBA
@@ -201,7 +201,7 @@
                                            (when metadata
                                              (let [result (merge
                                                            metadata
-                                                           {:infohash (codec.runtime.core/hex-to-string infohashBA)
+                                                           {:infohash (find.codec/hex-to-string infohashBA)
                                                             :seeder-count @seeders-countA})]
                                                (put! result| result)
                                                (put! out| result)))

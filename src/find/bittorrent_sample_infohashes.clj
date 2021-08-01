@@ -5,8 +5,8 @@
                                      timeout to-chan  sliding-buffer dropping-buffer
                                      pipeline pipeline-async]]
    [clojure.core.async.impl.protocols :refer [closed?]]
-   [expanse.bytes.runtime.core :as bytes.runtime.core]
-   [expanse.codec.runtime.core :as codec.runtime.core]
+   [find.bytes]
+   [find.codec]
    [find.seed]))
 
 (do (set! *warn-on-reflection* true) (set! *unchecked-math* true))
@@ -50,11 +50,11 @@
                 (swap! stateA update-in [:routing-table-sampled] assoc id (merge node
                                                                                  {:timestamp (find.seed/now)}))
                 (take! (send-krpc-request
-                        {:t (bytes.runtime.core/random-bytes 4)
+                        {:t (find.bytes/random-bytes 4)
                          :y "q"
                          :q "sample_infohashes"
                          :a {:id self-idBA
-                             :target (bytes.runtime.core/random-bytes 20)}}
+                             :target (find.bytes/random-bytes 20)}}
                         node
                         (timeout 2000))
                        (fn [value]

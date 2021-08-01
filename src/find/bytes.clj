@@ -1,8 +1,8 @@
-(ns expanse.bytes.runtime.core
+(ns find.bytes
   (:refer-clojure :exclude [alength byte-array concat aset-byte unchecked-int unchecked-byte])
   (:require
-   [expanse.bytes.protocols :as bytes.protocols]
-   [expanse.bytes.spec :as bytes.spec])
+   [find.protocols]
+   [find.spec :as find.spec])
   (:import
    (java.util Random BitSet Arrays)
    (java.nio ByteBuffer)
@@ -19,8 +19,8 @@
       (derive clojure.lang.Keyword ::keyword)
       (derive clojure.lang.IPersistentMap ::map)
       (derive clojure.lang.Sequential ::sequential)
-      (derive ByteArray ::bytes.spec/byte-array)
-      (derive java.nio.ByteBuffer ::bytes.spec/byte-buffer)))
+      (derive ByteArray ::find.spec/byte-array)
+      (derive java.nio.ByteBuffer ::find.spec/byte-buffer)))
 
 (defn random-bytes ^bytes
   [^Number length]
@@ -38,7 +38,7 @@
 
 (defmulti equals? (fn [x & more] (type x)) :hierarchy #'types)
 
-(defmethod equals? ::bytes.spec/byte-array ^Boolean
+(defmethod equals? ::find.spec/byte-array ^Boolean
   [byte-arr1 byte-arr2]
   (Arrays/equals ^bytes byte-arr1 ^bytes byte-arr2))
 
@@ -48,7 +48,7 @@
   [^String string]
   (.getBytes string "UTF-8"))
 
-(defmethod to-byte-array ::bytes.spec/byte-buffer ^bytes
+(defmethod to-byte-array ::find.spec/byte-buffer ^bytes
   ([^ByteBuffer buffer]
    (if (and
         (zero? (.position buffer))
@@ -65,11 +65,11 @@
 
 (defmulti to-string type :hierarchy #'types)
 
-(defmethod to-string ::bytes.spec/byte-array ^String
+(defmethod to-string ::find.spec/byte-array ^String
   [^bytes byte-arr]
   (String. byte-arr "UTF-8"))
 
-(defmethod to-string ::bytes.spec/byte-buffer ^String
+(defmethod to-string ::find.spec/byte-buffer ^String
   [^ByteBuffer buffer]
   (String. ^bytes (to-byte-array buffer) "UTF-8"))
 
@@ -84,14 +84,14 @@
 (defmulti concat
   (fn [xs] (type (first xs))) :hierarchy #'types)
 
-(defmethod concat ::bytes.spec/byte-array ^bytes
+(defmethod concat ::find.spec/byte-array ^bytes
   [byte-arrs]
   (with-open [out (java.io.ByteArrayOutputStream.)]
     (doseq [^bytes byte-arr byte-arrs]
       (.write out byte-arr))
     (.toByteArray out)))
 
-(defmethod concat ::bytes.spec/byte-buffer ^ByteBuffer
+(defmethod concat ::find.spec/byte-buffer ^ByteBuffer
   [buffers]
   (->
    (concat (map #(to-byte-array %) buffers))
@@ -293,7 +293,7 @@
   (clojure.core/aget byte-arr ^int idx))
 
 (deftype TPushbackInputStream [^PushbackInputStream in]
-  bytes.protocols/IPushbackInputStream
+  find.protocols/IPushbackInputStream
   (read*
     [_]
     (.read in))
@@ -323,8 +323,8 @@
    (TPushbackInputStream.)))
 
 (deftype TByteArrayOutputStream [^ByteArrayOutputStream out]
-  bytes.protocols/IByteArrayOutputStream
-  (write*
+  find.protocols/IByteArrayOutputStream
+  (write-byte*
     [_ int8]
     (.write out ^int int8))
   (write-byte-array*
@@ -333,7 +333,7 @@
   (reset*
     [_]
     (.reset out))
-  bytes.protocols/IToByteArray
+  find.protocols/IToByteArray
   (to-byte-array*
     [_]
     (.toByteArray out))
@@ -349,7 +349,7 @@
 
 
 (deftype TBitSet [^BitSet bitset]
-  bytes.protocols/IBitSet
+  find.protocols/IBitSet
   (get*
     [_ bit-index]
     (.get bitset ^int bit-index))
@@ -362,7 +362,7 @@
   (set*
     [_ bit-index value]
     (.set bitset ^int bit-index ^boolean value))
-  bytes.protocols/IToByteArray
+  find.protocols/IToByteArray
   (to-byte-array*
     [_]
     (.toByteArray bitset)))
@@ -493,18 +493,18 @@
   
   (do
     (set! *warn-on-reflection* true)
-    (require '[expanse.bytes.runtime.core :as bytes.runtime.core] :reload))
+    (require '[find.bytes] :reload))
 
   (in-ns 'expanse.bytes.core)
   
   (do
     (in-ns 'expanse.bytes.core)
     (def b (bitset 0))
-    (bytes.protocols/set* b 3)
-    (println (bytes.protocols/to-array* b))
+    (find.protocols/set* b 3)
+    (println (find.protocols/to-array* b))
 
-    (bytes.protocols/set* b 10)
-    (println (bytes.protocols/to-array* b)))
+    (find.protocols/set* b 10)
+    (println (find.protocols/to-array* b)))
   
   ;
   )
@@ -559,12 +559,12 @@
   
   (do
     (set! *warn-on-reflection* true)
-    (require '[expanse.bytes.runtime.core :as bytes.runtime.core] :reload)
+    (require '[find.bytes] :reload)
     (require '[expanse.codec.core :as codec.core] :reload))
   
   (->
    (java.security.MessageDigest/getInstance "sha1")
-   (.digest (bytes.runtime.core/to-byte-array (clojure.string/join "" (repeat 1000 "aabbccdd"))))
+   (.digest (find.bytes/to-byte-array (clojure.string/join "" (repeat 1000 "aabbccdd"))))
    (codec.core/hex-to-string))
   ; "49e4076d086a529baf5d5e62f57bacbd9d4dbe81"
   
@@ -605,7 +605,7 @@
 
     (defn foo
       [aset-byte]
-      (let [byte-arr (bytes.runtime.core/byte-array 20)]
+      (let [byte-arr (find.bytes/byte-array 20)]
         (dotimes [i 10000000]
           (aset-byte byte-arr 5 5))))
 
@@ -641,20 +641,20 @@
 (comment
 
   (time
-   (let [ba (bytes.runtime.core/byte-array (range 20))]
+   (let [ba (find.bytes/byte-array (range 20))]
      (dotimes [i 1000000]
-       (-> [(bytes.runtime.core/copy-byte-array ba 0 10)
-            (bytes.runtime.core/copy-byte-array ba 10 20)]
-           (bytes.runtime.core/concat)))))
+       (-> [(find.bytes/copy-byte-array ba 0 10)
+            (find.bytes/copy-byte-array ba 10 20)]
+           (find.bytes/concat)))))
   ; "Elapsed time: 382.270465 msecs"
 
   (time
-   (let [ba (bytes.runtime.core/byte-array (range 20))]
+   (let [ba (find.bytes/byte-array (range 20))]
      (dotimes [i 1000000]
-       (-> [(bytes.runtime.core/buffer-wrap ba 0 10)
-            (bytes.runtime.core/buffer-wrap ba 10 10)]
-           (bytes.runtime.core/concat)
-           (bytes.runtime.core/to-byte-array)))))
+       (-> [(find.bytes/buffer-wrap ba 0 10)
+            (find.bytes/buffer-wrap ba 10 10)]
+           (find.bytes/concat)
+           (find.bytes/to-byte-array)))))
   ; "Elapsed time: 1666.753437 msecs"
 
   ;

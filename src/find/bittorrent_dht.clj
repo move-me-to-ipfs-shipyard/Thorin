@@ -6,13 +6,13 @@
                                      pipeline pipeline-async]]
    [clojure.core.async.impl.protocols :refer [closed?]]
    [clojure.string]
-   [expanse.bytes.runtime.core :as bytes.runtime.core]
-   [expanse.codec.runtime.core :as codec.runtime.core]
-   [expanse.bencode.core :as bencode.core]
+   [find.bytes]
+   [find.codec]
+   [find.bencode]
 
-   [expanse.datagram-socket.runtime.core :as datagram-socket.runtime.core]
-   [expanse.datagram-socket.protocols :as datagram-socket.protocols]
-   [expanse.datagram-socket.spec :as datagram-socket.spec]
+   [find.datagram-socket]
+   [find.protocols]
+   [find.spec :as find.spec]
 
    [find.seed]))
 
@@ -26,16 +26,16 @@
            port]}]
   (let [ex| (chan 1)
         evt| (chan (sliding-buffer 10))
-        socket (datagram-socket.runtime.core/create
-                {::datagram-socket.spec/host host
-                 ::datagram-socket.spec/port port
-                 ::datagram-socket.spec/evt| evt|
-                 ::datagram-socket.spec/msg| msg|
-                 ::datagram-socket.spec/ex| ex|})
+        socket (find.datagram-socket/create
+                {::find.spec/host host
+                 ::find.spec/port port
+                 ::find.spec/evt| evt|
+                 ::find.spec/msg| msg|
+                 ::find.spec/ex| ex|})
         release (fn []
-                  (datagram-socket.protocols/close* socket))]
+                  (find.protocols/close* socket))]
     (go
-      (datagram-socket.protocols/listen* socket)
+      (find.protocols/listen* socket)
       (<! evt|)
       (println (format "listening on %s:%s" host port))
       (loop []
@@ -43,9 +43,9 @@
           send|
           ([{:keys [msg host port] :as value}]
            (when value
-             (datagram-socket.protocols/send*
+             (find.protocols/send*
               socket
-              (bencode.core/encode msg)
+              (find.bencode/encode msg)
               {:host host
                :port port})
              (recur)))
@@ -77,8 +77,8 @@
     (go
       (loop []
         (when-let [{:keys [msg host port] :as value} (<! msg|tap)]
-          (let [msg-y (some-> (:y msg) (bytes.runtime.core/to-string))
-                msg-q (some-> (:q msg) (bytes.runtime.core/to-string))]
+          (let [msg-y (some-> (:y msg) (find.bytes/to-string))
+                msg-q (some-> (:q msg) (find.bytes/to-string))]
             (cond
 
               #_(and (= msg-y "r") (goog.object/getValueByKeys msg "r" "samples"))
@@ -101,7 +101,7 @@
               (and (= msg-y "q")  (= msg-q "ping"))
               (let [txn-idBA  (:t msg)
                     node-idBA (get-in msg [:a :id])]
-                (if (or (not txn-idBA) (not= (bytes.runtime.core/alength node-idBA) 20))
+                (if (or (not txn-idBA) (not= (find.bytes/alength node-idBA) 20))
                   (do nil :invalid-data)
                   (put! send|
                         {:msg  {:t txn-idBA
@@ -113,7 +113,7 @@
               (and (= msg-y "q")  (= msg-q "find_node"))
               (let [txn-idBA  (:t msg)
                     node-idBA (get-in msg [:a :id])]
-                (if (or (not txn-idBA) (not= (bytes.runtime.core/alength node-idBA) 20))
+                (if (or (not txn-idBA) (not= (find.bytes/alength node-idBA) 20))
                   (println "invalid query args: find_node")
                   (put! send|
                         {:msg {:t txn-idBA
@@ -127,8 +127,8 @@
               (let [infohashBA (get-in msg [:a :info_hash])
                     txn-idBA (:t msg)
                     node-idBA (get-in msg [:a :id])
-                    tokenBA (bytes.runtime.core/copy-byte-array infohashBA 0 4)]
-                (if (or (not txn-idBA) (not= (bytes.runtime.core/alength node-idBA) 20) (not= (bytes.runtime.core/alength infohashBA) 20))
+                    tokenBA (find.bytes/copy-byte-array infohashBA 0 4)]
+                (if (or (not txn-idBA) (not= (find.bytes/alength node-idBA) 20) (not= (find.bytes/alength infohashBA) 20))
                   (println "invalid query args: get_peers")
                   (do
                     (put! infohashes-from-listening| {:infohashBA infohashBA})
@@ -145,7 +145,7 @@
               (let [infohashBA  (get-in msg [:a :info_hash])
                     txn-idBA (:t msg)
                     node-idBA (get-in msg [:a :id])
-                    tokenBA (bytes.runtime.core/copy-byte-array infohashBA 0 4)]
+                    tokenBA (find.bytes/copy-byte-array infohashBA 0 4)]
 
                 (cond
                   (not txn-idBA)
@@ -238,7 +238,7 @@
                                   (filter valid-for-ping?)
                                   (take 8))))]
                (take! (send-krpc-request
-                       {:t (bytes.runtime.core/random-bytes 4)
+                       {:t (find.bytes/random-bytes 4)
                         :y "q"
                         :q "ping"
                         :a {:id self-idBA}}
@@ -293,7 +293,7 @@
                                              ["0"  "2"  "4"  "6"  "8"  "a"  "c"  "e"]
                                              #_["0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "a" "b" "c" "d" "e" "f"])})
     (doseq [[id routing-table] (:dht-keyspace @stateA)]
-      (swap! stateA update-in [:dht-keyspace id] (partial into (sorted-map-by (find.seed/hash-key-distance-comparator-fn (codec.runtime.core/hex-to-bytes id))))))
+      (swap! stateA update-in [:dht-keyspace id] (partial into (sorted-map-by (find.seed/hash-key-distance-comparator-fn (find.codec/hex-to-bytes id))))))
     (swap! stateA update :dht-keyspace (partial into (sorted-map)))
 
     ; add nodes to routing table
@@ -321,7 +321,7 @@
                           (map (fn [[id routing-table]]
                                  [id (->> routing-table
                                           (take routing-table-max-size)
-                                          (into (sorted-map-by (find.seed/hash-key-distance-comparator-fn (codec.runtime.core/hex-to-bytes id)))))]))
+                                          (into (sorted-map-by (find.seed/hash-key-distance-comparator-fn (find.codec/hex-to-bytes id)))))]))
                           (into (sorted-map)))))
                 (recur n 0 (find.seed/now) 0))
               (recur n (inc i) (find.seed/now) (+ time-total (- (find.seed/now) ts)))))))
@@ -342,7 +342,7 @@
                                   (filter valid-for-ping?)
                                   (take 8))))]
                (take! (send-krpc-request
-                       {:t (bytes.runtime.core/random-bytes 4)
+                       {:t (find.bytes/random-bytes 4)
                         :y "q"
                         :q "ping"
                         :a {:id self-idBA}}

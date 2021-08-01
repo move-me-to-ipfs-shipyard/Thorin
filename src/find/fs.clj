@@ -1,8 +1,8 @@
-(ns expanse.fs.runtime.core
+(ns find.fs
   (:refer-clojure :exclude [remove])
   (:require
    [clojure.java.io :as io]
-   [expanse.fs.protocols :as fs.protocols])
+   [find.protocols])
   (:import (java.io Writer File)))
 
 (do (set! *warn-on-reflection* true) (set! *unchecked-math* true))
@@ -29,10 +29,11 @@
   (io/make-parents filepath))
 
 (deftype TWriter [^Writer io-writer]
-  fs.protocols/PWriter
-  (write*
+  find.protocols/PWriter
+  (write-string*
     [_ string]
     (.write io-writer ^String string))
+  find.protocols/Close
   (close*
     [_]
     (.close io-writer)))

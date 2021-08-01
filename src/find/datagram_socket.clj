@@ -1,4 +1,4 @@
-(ns expanse.datagram-socket.runtime.core
+(ns find.datagram-socket
   (:require
    [clojure.core.async :as a :refer [chan go go-loop <! >!  take! put! offer! poll! alt! alts! close! onto-chan!
                                      pub sub unsub mult tap untap mix admix unmix pipe
@@ -7,9 +7,9 @@
    [clojure.core.async.impl.protocols :refer [closed?]]
    [clojure.spec.alpha :as s]
 
-   [expanse.bytes.runtime.core :as bytes.runtime.core]
-   [expanse.datagram-socket.spec :as datagram-socket.spec]
-   [expanse.datagram-socket.protocols :as datagram-socket.protocols]
+   [find.bytes]
+   [find.spec :as find.spec]
+   [find.protocols]
    [manifold.deferred :as d]
    [manifold.stream :as sm]
    [aleph.udp])
@@ -20,30 +20,30 @@
 
 (do (set! *warn-on-reflection* true) (set! *unchecked-math* true))
 
-(s/def ::opts (s/keys :req [::datagram-socket.spec/host
-                            ::datagram-socket.spec/port
-                            ::datagram-socket.spec/evt|
-                            ::datagram-socket.spec/msg|
-                            ::datagram-socket.spec/ex|]
+(s/def ::opts (s/keys :req [::find.spec/host
+                            ::find.spec/port
+                            ::find.spec/evt|
+                            ::find.spec/msg|
+                            ::find.spec/ex|]
                       :opt []))
 
 (defn create
   [{:as opts
-    :keys [::datagram-socket.spec/host
-           ::datagram-socket.spec/port
-           ::datagram-socket.spec/evt|
-           ::datagram-socket.spec/msg|
-           ::datagram-socket.spec/ex|]
+    :keys [::find.spec/host
+           ::find.spec/port
+           ::find.spec/evt|
+           ::find.spec/msg|
+           ::find.spec/ex|]
     :or {host "0.0.0.0"
          port 6881}}]
   {:pre [(s/assert ::opts opts)]
-   :post [(s/assert ::datagram-socket.spec/socket %)]}
+   :post [(s/assert ::find.spec/datagram-socket %)]}
   (let [streamV (volatile! nil)
-        
+
         socket
-        ^{:type ::datagram-socket.spec/socket}
+        ^{:type ::find.spec/datagram-socket}
         (reify
-          datagram-socket.protocols/Socket
+          find.protocols/DatagramSocket
           (listen*
             [t]
             (->
@@ -70,15 +70,17 @@
                         (d/recur))))
                    (d/catch Exception (fn [ex]
                                         (put! ex| ex)
-                                        (datagram-socket.protocols/close* t)))))))
+                                        (find.protocols/close* t)))))))
              (d/catch Exception (fn [ex]
                                   (put! ex| ex)
-                                  (datagram-socket.protocols/close* t)))))
+                                  (find.protocols/close* t)))))
+          find.protocols/Send
           (send*
             [_ byte-arr {:keys [host port]}]
             (sm/put! @streamV {:host host
                                :port port
                                :message byte-arr}))
+          find.protocols/Close
           (close*
             [_]
             (when-let [stream @streamV]

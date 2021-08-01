@@ -1,18 +1,19 @@
 (ns find.protocols)
 
-(defprotocol DatagramSocket
-  (close* [_])
-  (listen* [_])
-  (send* [_ data address])
-  #_IDeref)
-
-
 (defprotocol Close
   (close* [_]))
 
+(defprotocol Send
+  (send* [_ data] [_ data address]))
+
+(defprotocol DatagramSocket
+  (listen* [_])
+  #_Close
+  #_IDeref)
+
 (defprotocol Socket
   (connect* [_])
-  (send* [_ data])
+  #_Send
   #_Close
   #_IDeref)
 
@@ -25,10 +26,23 @@
   (to-byte-array* [_]))
 
 (defprotocol IByteArrayOutputStream
-  (write* [_ char-int])
+  (write-byte* [_ char-int])
   (write-byte-array* [_ byte-arr])
   (reset* [_])
   #_IToByteArray)
 
+(defprotocol IBitSet
+  (get* [_ bit-index])
+  (get-subset* [_ from-index to-index])
+  (set* [_ bit-index] [_ bit-index value])
+  #_IToByteArray)
+
 (defprotocol Closable
   (close [_]))
+
+(defprotocol PWriter
+  (write-string* [_ string])
+  #_Close)
+
+(defprotocol Wire
+  #_IDeref)

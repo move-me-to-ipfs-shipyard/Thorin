@@ -5,8 +5,8 @@
                                      timeout to-chan  sliding-buffer dropping-buffer
                                      pipeline pipeline-async]]
    [clojure.core.async.impl.protocols :refer [closed?]]
-   [expanse.bytes.runtime.core :as bytes.runtime.core]
-   [expanse.codec.runtime.core :as codec.runtime.core]
+   [find.bytes]
+   [find.codec]
    [find.seed]))
 
 (do (set! *warn-on-reflection* true) (set! *unchecked-math* true))
@@ -28,7 +28,7 @@
          (doseq [node nodes-bootstrap]
            (take!
             (send-krpc-request
-             {:t (bytes.runtime.core/random-bytes 4)
+             {:t (find.bytes/random-bytes 4)
               :y "q"
               :q "find_node"
               :a {:id self-idBA
@@ -44,11 +44,11 @@
              (<! (timeout 500))
              (take!
               (send-krpc-request
-               {:t (bytes.runtime.core/random-bytes 4)
+               {:t (find.bytes/random-bytes 4)
                 :y "q"
                 :q "find_node"
                 :a {:id self-idBA
-                    :target (codec.runtime.core/hex-to-bytes id)  #_(find.seed/gen-neighbor-id (.randomBytes crypto 20) self-idB)}}
+                    :target (find.codec/hex-to-bytes id)  #_(find.seed/gen-neighbor-id (.randomBytes crypto 20) self-idB)}}
                node
                (timeout 2000))
               (fn [{:keys [msg] :as value}]
@@ -87,7 +87,7 @@
                                                                            :timestamp (find.seed/now)})
              (take!
               (send-krpc-request
-               {:t (bytes.runtime.core/random-bytes 4)
+               {:t (find.bytes/random-bytes 4)
                 :y "q"
                 :q "find_node"
                 :a {:id self-idBA
@@ -111,11 +111,11 @@
                                                                            :timestamp (find.seed/now)})
              (take!
               (send-krpc-request
-               {:t (bytes.runtime.core/random-bytes 4)
+               {:t (find.bytes/random-bytes 4)
                 :y "q"
                 :q "find_node"
                 :a {:id self-idBA
-                    :target (codec.runtime.core/hex-to-bytes k)  #_(find.seed/gen-neighbor-id (.randomBytes crypto 20) self-idB)}}
+                    :target (find.codec/hex-to-bytes k)  #_(find.seed/gen-neighbor-id (.randomBytes crypto 20) self-idB)}}
                node
                (timeout 2000))
               (fn [{:keys [msg] :as value}]

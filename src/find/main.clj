@@ -10,12 +10,12 @@
    [clojure.walk]
    [clojure.java.io :as io]
 
-   [expanse.fs.runtime.core :as fs.runtime.core]
-   [expanse.fs.protocols :as fs.protocols]
+   [find.fs]
+   [find.protocols]
 
-   [expanse.bytes.runtime.core :as bytes.runtime.core]
-   [expanse.codec.runtime.core :as codec.runtime.core]
-   [expanse.bencode.core :as bencode.core]
+   [find.bytes]
+   [find.codec]
+   [find.bencode]
 
    [cljfx.api]
    [find.spec :as find.spec]
@@ -44,11 +44,11 @@
 
 (defn -main [& args]
   (println ::-main)
-  (let [data-dir (fs.runtime.core/path-join (System/getProperty "user.dir") "data")
-        state-filepath (fs.runtime.core/path-join data-dir "find.json")
+  (let [data-dir (find.fs/path-join (System/getProperty "user.dir") "data")
+        state-filepath (find.fs/path-join data-dir "find.json")
         _ (swap! stateA merge
-                 (let [self-idBA  (codec.runtime.core/hex-to-bytes "a8fb5c14469fc7c46e91679c493160ed3d13be3d") #_(bytes.runtime.core/random-bytes 20)]
-                   {:self-id (codec.runtime.core/hex-to-string self-idBA)
+                 (let [self-idBA  (find.codec/hex-to-bytes "a8fb5c14469fc7c46e91679c493160ed3d13be3d") #_(find.bytes/random-bytes 20)]
+                   {:self-id (find.codec/hex-to-string self-idBA)
                     :self-idBA self-idBA
                     :routing-table (sorted-map)
                     :dht-keyspace {}
@@ -69,7 +69,7 @@
                            (swap! count-messagesA inc)
                            (try
                              {:msg  (->
-                                     (bencode.core/decode msgBA)
+                                     (find.bencode/decode msgBA)
                                      (clojure.walk/keywordize-keys))
                               :host host
                               :port port}
@@ -85,7 +85,7 @@
         unique-infohashsesA (atom #{})
         xf-infohash (comp
                      (map (fn [{:keys [infohashBA] :as value}]
-                            (assoc value :infohash (codec.runtime.core/hex-to-string infohashBA))))
+                            (assoc value :infohash (find.codec/hex-to-string infohashBA))))
                      (filter (fn [{:keys [infohash]}]
                                (not (get @unique-infohashsesA infohash))))
                      (map (fn [{:keys [infohash] :as value}]
@@ -233,7 +233,7 @@
 
       ; save state to file periodically
         (go
-          (when-not (fs.runtime.core/path-exists? state-filepath)
+          (when-not (find.fs/path-exists? state-filepath)
             (<! (find.seed/write-state-file state-filepath @stateA)))
           (loop []
             (<! (timeout (* 4.5 1000)))
@@ -357,13 +357,13 @@
            count-torrentsA
            count-messages-sybilA]}]
   (let [started-at (find.seed/now)
-        filepath (fs.runtime.core/path-join data-dir "find.bittorrent-dht-crawl.log.edn")
-        _ (fs.runtime.core/remove filepath)
-        _ (fs.runtime.core/make-parents filepath)
-        writer (fs.runtime.core/writer filepath :append true)
+        filepath (find.fs/path-join data-dir "find.bittorrent-dht-crawl.log.edn")
+        _ (find.fs/remove filepath)
+        _ (find.fs/make-parents filepath)
+        writer (find.fs/writer filepath :append true)
         countA (atom 0)
         release (fn []
-                  (fs.protocols/close* writer))]
+                  (find.protocols/close* writer))]
     (go
       (loop []
         (alt!
@@ -390,8 +390,8 @@
                        [:sybils| (str (- (find.seed/fixed-buf-size sybils|) (count (find.seed/chan-buf sybils|))) "/" (find.seed/fixed-buf-size sybils|))]
                        [:time (str (int (/ (- (find.seed/now) started-at) 1000 60)) "min")]]]
              (pprint info)
-             (fs.protocols/write* writer (with-out-str (pprint info)))
-             (fs.protocols/write* writer "\n"))
+             (find.protocols/write-string* writer (with-out-str (pprint info)))
+             (find.protocols/write-string* writer "\n"))
            (recur))
 
           stop|
@@ -502,15 +502,15 @@
    '[clojure.core.async.impl.protocols :refer [closed?]])
 
   (require
-   '[expanse.fs.runtime.core :as fs.runtime.core]
-   '[expanse.bytes.runtime.core :as bytes.runtime.core]
-   '[expanse.codec.runtime.core :as codec.runtime.core]
-   '[expanse.bencode.core :as bencode.core]
+   '[find.fs]
+   '[find.bytes]
+   '[find.codec]
+   '[find.bencode]
    '[expanse.bittorrent.dht-crawl.core :as dht-crawl.core]
    :reload #_:reload-all)
 
   (dht-crawl.core/start
-   {:data-dir (fs.runtime.core/path-join "./dht-crawl")})
+   {:data-dir (find.fs/path-join "./dht-crawl")})
 
 
 
