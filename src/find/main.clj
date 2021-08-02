@@ -17,11 +17,9 @@
    [find.codec]
    [find.bencode]
 
-   [cljfx.api]
    [find.spec :as find.spec]
    [find.seed]
 
-   [find.cljfx :as find.cljfx]
    [find.db :as find.db]
 
    [find.bittorrent-dht :as find.bittorrent-dht]
@@ -35,8 +33,7 @@
 (clojure.spec.alpha/check-asserts true)
 (set! *warn-on-reflection* true)
 
-(defonce stateA (atom {:fx/type find.cljfx/root
-                       ::find.spec/searchS ""}))
+(defonce stateA (atom {::find.spec/searchS ""}))
 
 (declare
  process-print-info
@@ -194,8 +191,6 @@
 
         state @stateA]
 
-    (find.cljfx/process {:stateA stateA})
-
     #_(go
 
         (println ::self-id self-id)
@@ -327,13 +322,10 @@
    '[expanse.bytes.core :as bytes.core]
    '[find.ipfs-dht :as find.ipfs-dht]
    '[find.spec :as find.spec]
-   '[find.cljfx :as find.cljfx]
    '[find.db :as find.db]
    :reload)
 
   (-main)
-
-  (find.cljfx/renderer @stateA)
 
   (swap! stateA assoc ::find.spec/searchS "123")
 
