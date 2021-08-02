@@ -40,8 +40,6 @@ j-package(){
       J_ARG=""
   fi
 
-  APP_VERSION=0.1.0
-
   jpackage \
     --input target/jpackage-input \
     --dest target \
@@ -50,9 +48,7 @@ j-package(){
     --main-class clojure.main \
     --arguments -m \
     --arguments find.main \
-    --resource-dir resources \
-    --java-options -Xmx2048m \
-    --app-version ${APP_VERSION} \
+    --app-version "1" \
     $J_ARG
   
 }
