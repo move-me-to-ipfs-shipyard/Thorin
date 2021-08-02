@@ -13,11 +13,7 @@
         io.replikativ/datahike {:mvn/version "0.3.6"}}
 
  :aliases
- {:main
-  {:jvm-opts ["-Dclojure.core.async.pool-size=1" "-Dclojure.compiler.direct-linking=true"]
-   :main-opts ["-m" "find.main"]}
-
-  :repl
+ {:repl
   {:extra-deps {deps-repl/deps-repl {:git/url "https://github.com/empire-strikes-back/deps-repl"
                                      :sha "24266c05ce16c27ec3464ae6453b931aa0398a1b"}
                 nrepl/nrepl {:mvn/version "0.8.3"}
@@ -26,4 +22,8 @@
                "--init-ns" "find.main"
                "--port" "7788"
                "--bind" "0.0.0.0"
-               "--middleware" "cider.nrepl/cider-middleware"]}}}
+               "--middleware" "cider.nrepl/cider-middleware"]}
+  
+  :main
+  {:jvm-opts ["-Dclojure.core.async.pool-size=1" "-Dclojure.compiler.direct-linking=true"]
+   :main-opts ["-m" "find.main"]}}}
