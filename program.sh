@@ -41,8 +41,8 @@ j-package(){
   fi
 
   jpackage \
-    --input target/jpackage-input \
-    --dest target \
+    --input out/jpackage-input \
+    --dest out \
     --main-jar find.standalone.jar \
     --name "find" \
     --main-class clojure.main \
