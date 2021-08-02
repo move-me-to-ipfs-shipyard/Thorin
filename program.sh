@@ -11,7 +11,10 @@ repl(){
 }
 
 main(){
-  clojure -M:main
+  clojure \
+    -J-Dclojure.core.async.pool-size=1 \
+    -J-Dclojure.compiler.direct-linking=false \
+    -M -m find.main
 }
 
 uberjar(){

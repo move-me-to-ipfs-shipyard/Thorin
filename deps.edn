@@ -12,8 +12,4 @@
  :aliases
  {:repl
   {deps-repl/deps-repl {:git/url "https://github.com/empire-strikes-back/deps-repl"
-                        :sha "8904c39e136aacafc70c3e066856fc87bcdec127"}}
-
-  :main
-  {:jvm-opts ["-Dclojure.core.async.pool-size=1" "-Dclojure.compiler.direct-linking=true"]
-   :main-opts ["-m" "find.main"]}}}
+                        :sha "8904c39e136aacafc70c3e066856fc87bcdec127"}}}}
