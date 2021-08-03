@@ -15,4 +15,5 @@
                                      :sha "8904c39e136aacafc70c3e066856fc87bcdec127"}}}
 
   :uberjar
-  {:extra-deps {}}}}
+  {:extra-deps {depstar/depstar {:git/url "https://github.com/seancorfield/depstar"
+                                 :sha "722d2af6dd94a3d237a9b4342ccf74207bbd2a7e"}}}}}
