@@ -18,7 +18,10 @@ main(){
 }
 
 uberjar(){
-  
+  clj \
+    -X:uberjar genie.core/process \
+    :uberjar-name out/find.standalone.jar \
+    :main-ns find.main
   mkdir -p out/jpackage-input
   mv out/find.standalone.jar out/jpackage-input/
 }
