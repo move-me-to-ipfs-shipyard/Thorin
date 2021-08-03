@@ -18,12 +18,7 @@ main(){
 }
 
 uberjar(){
-  clojure \
-    -X:uberjar hf.depstar/uberjar \
-    :aot true \
-    :jar out/find.standalone.jar \
-    :verbose false \
-    :main-class find.main
+  
   mkdir -p out/jpackage-input
   mv out/find.standalone.jar out/jpackage-input/
 }
