@@ -1,14 +1,5 @@
-i am find program - i search and download torrent files
+i am find program
 
-- i am decentralized peer-to-peer program to search and download torrent files
-- automated index - i crawl torrent network, forming the index of files
-- query the whole index - i exchange indexes with other find programs so we each have the whole index to query
-- index is just data in db - i extract file info and show seeds (pins)
-- search - i search by file name, i sort by seeders/leechers, i output a list of file names, no images
-- automatic index echange - we, find programs, discover each other and exchange the list of files
-- dht - i use existing dht, not pubsub, to find other find programs to share index (additional field to dht's ping to discover/ask and ut_metadata-like extension to then download index)
-- extension - i am an extension of existing torrent network
-- i do download files
 - language - my language is clojure
 - installation - i am a desktop program
 - logo - i have no logo, my name, a word - find - defines me
