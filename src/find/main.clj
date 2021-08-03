@@ -26,7 +26,11 @@
    [find.bittorrent-find-nodes :as find.bittorrent-find-nodes]
    [find.bittorrent-metadata :as find.bittorrent-metadata]
    [find.bittorrent-sybil :as find.bittorrent-sybil]
-   [find.bittorrent-sample-infohashes :as find.bittorrent-sample-infohashes]))
+   [find.bittorrent-sample-infohashes :as find.bittorrent-sample-infohashes])
+  (:import
+   (javax.swing JFrame JLabel JButton SwingConstants JMenuBar JMenu JTextArea)
+   (java.awt Canvas Graphics)
+   (java.awt.event WindowListener KeyListener KeyEvent)))
 
 (println "clojure.core.async.pool-size" (System/getProperty "clojure.core.async.pool-size"))
 (println "clojure.compiler.direct-linking" (System/getProperty "clojure.compiler.direct-linking"))
@@ -190,6 +194,13 @@
                   :count-messages-sybilA (atom 0)})
 
         state @stateA]
+
+    (let [jframe (JFrame. "find")]
+      (doto jframe
+        (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
+        (.setSize 1600 1200)
+        (.setLocationByPlatform true)
+        (.setVisible true)))
 
     #_(go
 
