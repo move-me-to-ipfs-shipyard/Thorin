@@ -1,4 +1,4 @@
-i am find program - i am game
+i am find program
 
 - language - my language is clojure
 - installation - i am a desktop program
