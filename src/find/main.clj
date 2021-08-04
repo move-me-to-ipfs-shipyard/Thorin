@@ -195,7 +195,7 @@
 
         state @stateA]
 
-    (let [jframe (JFrame. "find")]
+    (let [jframe (JFrame. "i am find program")]
       (doto jframe
         (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
         (.setSize 1600 1200)
