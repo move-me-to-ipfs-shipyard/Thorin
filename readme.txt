@@ -6,6 +6,7 @@ i am find program - i search and download torrent files
 - logo - i have no logo, my name, a word - find - defines me
 - binaries - my repository has no binary releases, only my source code and i say "compile from source" in readme
 - runtime - i run on jvm, i will not be graalvm compiled, i'm not on Jesus level
+- compile - i compile without docker, on operating system - with jpackage, i require jvm, clj
 - run - i run with bash program.sh main
 - no plugins, no extensions - i, find, am exactly program who searches and downloads torrent files
 - issues - my repository has no issues or discussions, only my source code
