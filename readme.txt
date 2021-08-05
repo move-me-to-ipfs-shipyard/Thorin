@@ -1,7 +1,6 @@
 i am find program - i search and download torrent files
 
 - i am decentralized peer-to-peer program to search and download torrent files
-- index is just data in db - i extract file info and show seeds (pins)
 - search - i search by file name, i sort by seeders/leechers, i output a list of file names, no images
 - automatic index echange - we, find programs, discover each other and exchange the list of files
 - dht - i use existing dht, not pubsub, to find other find programs to share index (additional field to dht's ping to discover/ask and ut_metadata-like extension to then download index)
