@@ -9,3 +9,4 @@ i am find program, i say:
 - i do download files
 - installation - i am a desktop program
 - system tray - i say no, i run in foreground
+- database - i use datahike
