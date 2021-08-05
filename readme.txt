@@ -1,7 +1,6 @@
 i am find program - i search and download torrent files
 
 - i am decentralized peer-to-peer program to search and download torrent files
-- automated index - i crawl torrent network, forming the index of files
 - query the whole index - i exchange indexes with other find programs so we each have the whole index to query
 - index is just data in db - i extract file info and show seeds (pins)
 - search - i search by file name, i sort by seeders/leechers, i output a list of file names, no images

@@ -1,1 +1,3 @@
 i am find program, i say:
+
+- automated index - i crawl torrent network, forming the index of files
