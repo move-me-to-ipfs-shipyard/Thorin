@@ -1,3 +1,4 @@
 i am find program, i say:
 
 - automated index - i crawl torrent network, forming the index of files
+- query the whole index - i exchange indexes with other find programs so we each have the whole index to query
