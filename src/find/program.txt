@@ -10,3 +10,4 @@ i am find program, i say:
 - installation - i am a desktop program
 - system tray - i say no, i run in foreground
 - database - i use datahike
+- compile - i compile without docker, on operating system - with jpackage, i require jvm, clj
