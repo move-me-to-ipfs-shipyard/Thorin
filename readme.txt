@@ -2,7 +2,6 @@ i am find program - i search and download torrent files
 
 - i am decentralized peer-to-peer program to search and download torrent files
 - search - i search by file name, i sort by seeders/leechers, i output a list of file names, no images
-- extension - i am an extension of existing torrent network
 - i do download files
 - language - my language is clojure
 - installation - i am a desktop program
