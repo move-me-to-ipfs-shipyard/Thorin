@@ -3,6 +3,7 @@ i am find program - i search and download torrent files
 - i am decentralized peer-to-peer program to search and download torrent files
 - search - i search by file name, i sort by seeders/leechers, i output a list of file names, no images
 - language - my language is clojure
+- installation - i am a desktop program
 - logo - i have no logo, my name, a word - find - defines me
 - binaries - my repository has no binary releases, only my source code and i say "compile from source" in readme
 - runtime - i run on jvm, i will not be graalvm compiled, i'm not on Jesus level
