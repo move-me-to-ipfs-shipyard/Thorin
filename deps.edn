@@ -1,0 +1,19 @@
+{:paths ["src"]
+ :mvn/repos {"central" {:url "https://repo1.maven.org/maven2/"}
+             "clojars" {:url "https://clojars.org/repo"}}
+ :deps {org.clojure/clojure {:mvn/version "1.10.3"}
+        org.clojure/core.async {:mvn/version "1.3.618"}
+        org.clojure/spec.alpha {:mvn/version "0.2.187"}
+        aleph/aleph {:mvn/version "0.4.7-alpha5"}
+        byte-streams/byte-streams {:mvn/version "0.2.5-alpha2"}
+        manifold/manifold {:mvn/version "0.1.9-alpha3"}
+        io.replikativ/datahike {:mvn/version "0.3.6"}}
+
+ :aliases
+ {:repl
+  {:extra-deps {deps-repl/deps-repl {:git/url "https://github.com/empire-strikes-back/deps-repl"
+                                     :sha "8904c39e136aacafc70c3e066856fc87bcdec127"}}}
+
+  :uberjar
+  {:extra-deps {genie/genie {:git/url "https://github.com/empire-strikes-back/genie"
+                             :sha "8dc55bff334f866290383293a7f82b18181bcae2"}}}}}
