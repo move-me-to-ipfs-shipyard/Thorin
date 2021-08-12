@@ -18,13 +18,13 @@ i am find program - i search and download torrent files
 - authoring orgs, org links - i say no, my reposiotry is my source code only
 - docs - i say no: i am a program, i only have source code and readme with two sections - "i am program" and "compile from source"
 - tests - i say no
-- nesting - i say no, no dirs - all my files are flat on a single level: source/find
+- nesting - i say no, no dirs - all my files are flat on a single level: src/find
 - forbidden words - i forbid: refactor, fix, maintainer, archive, trash, helper, util, controller/manager, update, wrap, factory, play with,etc, misc, cleanup, service, org, test, alpha, client, impl
 - releases - i say no: my commit hashes define me
 - updates and update notifications - i say no
 - git - i have one branch - main, i have no git tags
 - commit history - i have no git history - my source files define me
-- resources  - i have no resources, all my files are in source/find
+- resources  - i have no resources, all my files are in src/find
 - pull requests - i accept no github pull requests - i have no public programmers
 - programmer names or emails in commit history - i say no, i am alive, my repository is my source code only
 - i am program - i'm simple, entirely free, open source, i have no barriers ratio-limits ads donations rewards economies links - i am program and i do my thing, like transmission on linux
