@@ -14,11 +14,6 @@
 
 (defprotocol WireProtocol)
 
-(s/def :recv| :channel)
-(s/def :send| :channel)
-(s/def :ex| :channel)
-(s/def :metadata| :channel)
-
 #_(defprotocol BufferCut
   (cut* [_ recv| expected-size]))
 
@@ -126,14 +121,6 @@
 (defn handshake-msg
   [infohashBA peer-idBA]
   (find.bytes/concat [pstrlenBA pstrBA reservedBA infohashBA peer-idBA]))
-
-(s/def :create-wire-opts
-  (s/keys :req [:send|
-                :recv|
-                :metadata|
-                :infohashBA
-                :peer-idBA]
-          :opt [:ex|]))
 
 (defn create
   [{:as opts
