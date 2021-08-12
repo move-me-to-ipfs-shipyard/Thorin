@@ -463,7 +463,6 @@
                       expanse/socket-jvm {:local/root "./expanse/socket-jvm"}
                       expanse/fs-jvm {:local/root "./expanse/fs-jvm"}
                       expanse/fs-meta {:local/root "./expanse/fs-meta"}
-                      expanse/transit-jvm {:local/root "./expanse/transit-jvm"}
                       expanse.bittorrent/spec {:local/root "./bittorrent/spec"}
                       expanse.bittorrent/bencode {:local/root "./bittorrent/bencode"}
                       expanse.bittorrent/wire-protocol {:local/root "./bittorrent/wire-protocol"}
@@ -479,7 +478,6 @@
                       expanse/fs-nodejs {:local/root "./expanse/fs-nodejs"}
                       expanse/fs-meta {:local/root "./expanse/fs-meta"}
                       expanse/socket-nodejs {:local/root "./expanse/socket-nodejs"}
-                      expanse/transit-js {:local/root "./expanse/transit-js"}
 
                       expanse.bittorrent/spec {:local/root "./bittorrent/spec"}
                       expanse.bittorrent/bencode {:local/root "./bittorrent/bencode"}

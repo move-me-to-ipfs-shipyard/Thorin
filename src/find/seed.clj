@@ -9,9 +9,7 @@
 
    [find.bytes]
    [find.codec]
-   [find.fs]
-   [find.transit]
-   [cognitect.transit :as transit]))
+   [find.fs]))
 
 (do (set! *warn-on-reflection* true) (set! *unchecked-math* true))
 
@@ -135,43 +133,20 @@
       clojure.lang.Counted
       (count [this] (count @collA)))))
 
-
-(def transit-write
-  (let [handlers {find.bytes/ByteArray
-                  (transit/write-handler
-                   (fn [byte-arr] "::find.bytes/byte-array")
-                   (fn [byte-arr] (find.codec/hex-to-string byte-arr)))
-                  clojure.core.async.impl.channels.ManyToManyChannel
-                  (transit/write-handler
-                   (fn [c|] "ManyToManyChannel")
-                   (fn [c|] nil))}]
-    (fn [data]
-      (find.transit/write-to-string data :json-verbose {:handlers handlers}))))
-
-(def transit-read
-  (let [handlers {"::find.bytes/byte-array"
-                  (transit/read-handler
-                   (fn [string] (find.codec/hex-to-bytes string)))
-                  "ManyToManyChannel"
-                  (transit/read-handler
-                   (fn [string] nil))}]
-    (fn [data-string]
-      (find.transit/read-string data-string :json-verbose {:handlers handlers}))))
-
 (defn read-state-file
   [filepath]
   (go
     (try
       (when (find.fs/path-exists? filepath)
         (let [data-string (find.bytes/to-string (find.fs/read-file filepath))]
-          (transit-read data-string)))
+         ))
       (catch Exception ex (println ::read-state-file ex)))))
 
 (defn write-state-file
   [filepath data]
   (go
     (try
-      (let [data-string (transit-write data)]
+      (let [data-string nil]
         (find.fs/make-parents filepath)
         (find.fs/write-file filepath data-string))
       (catch Exception ex (println ::write-state-file ex)))))
