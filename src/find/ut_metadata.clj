@@ -142,8 +142,6 @@
            ::metadata|
            :infohashBA
            :peer-idBA]}]
-  {:pre [(s/assert ::create-wire-opts opts)]
-   :post [(s/assert ::wire-protocol %)]}
   (let [stateV (volatile!
                 {})
 

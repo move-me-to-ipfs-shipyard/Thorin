@@ -20,8 +20,6 @@
            :evt|
            :msg|
            :ex|]}]
-  {:pre [(s/assert ::opts opts)]
-   :post [(s/assert :socket %)]}
   (let []))
 
 

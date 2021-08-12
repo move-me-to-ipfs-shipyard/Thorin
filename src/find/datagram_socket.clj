@@ -22,8 +22,6 @@
            :ex|]
     :or {host "0.0.0.0"
          port 6881}}]
-  {:pre [(s/assert ::opts opts)]
-   :post [(s/assert :datagram-socket %)]}
   (let []))
 
 
