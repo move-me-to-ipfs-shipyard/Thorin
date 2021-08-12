@@ -13,11 +13,9 @@
    [find.bytes]
    [find.codec]
    [find.socket]
-   [find.spec :as find.spec]
    [find.protocols]
    [find.bencode]
    [find.ut-metadata]
-   [find.spec :as find.spec]
    [find.seed]))
 
 (do (set! *warn-on-reflection* true) (set! *unchecked-math* true))
@@ -44,11 +42,11 @@
           socket-ex| (chan 1)
 
           socket (find.socket/create
-                  {::find.spec/port port
-                   ::find.spec/host host
-                   ::find.spec/evt| evt|
-                   ::find.spec/msg| msg|
-                   ::find.spec/ex| socket-ex|})
+                  {:port port
+                   :host host
+                   :evt| evt|
+                   :msg| msg|
+                   :ex| socket-ex|})
 
           release (fn []
                     (swap! count-socketsA dec)
@@ -60,12 +58,12 @@
                     (close! recv|))]
 
       (find.ut-metadata/create
-       {::find.spec/send| send|
-        ::find.spec/recv| recv|
-        ::find.spec/metadata| result|
-        ::find.spec/ex| ex|
-        ::find.spec/infohashBA infohashBA
-        ::find.spec/peer-idBA idBA})
+       {:send| send|
+        :recv| recv|
+        :metadata| result|
+        :ex| ex|
+        :infohashBA infohashBA
+        :peer-idBA idBA})
 
       (go
         (when-let [evt (<! evt|)]

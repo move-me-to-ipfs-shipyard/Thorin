@@ -5,32 +5,23 @@
                                      timeout to-chan  sliding-buffer dropping-buffer
                                      pipeline pipeline-async]]
    [clojure.core.async.impl.protocols :refer [closed?]]
-   [clojure.spec.alpha :as s]
-
    [find.bytes]
-   [find.spec :as find.spec]
    [find.protocols])
   (:import
    (java.net InetSocketAddress)))
 
 (do (set! *warn-on-reflection* true) (set! *unchecked-math* true))
 
-(s/def ::opts (s/keys :req [::find.spec/evt|
-                            ::find.spec/msg|
-                            ::find.spec/ex|]
-                      :opt [::find.spec/port
-                            ::find.spec/host]))
-
 (defn create
   [{:as opts
-    :keys [::find.spec/port
-           ::find.spec/host
+    :keys [:port
+           :host
            ::socket-stream
-           ::find.spec/evt|
-           ::find.spec/msg|
-           ::find.spec/ex|]}]
+           :evt|
+           :msg|
+           :ex|]}]
   {:pre [(s/assert ::opts opts)]
-   :post [(s/assert ::find.spec/socket %)]}
+   :post [(s/assert :socket %)]}
   (let []))
 
 

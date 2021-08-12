@@ -5,22 +5,14 @@
                                      timeout to-chan  sliding-buffer dropping-buffer
                                      pipeline pipeline-async]]
    [clojure.string]
-   [clojure.spec.alpha :as s]
    [find.bytes]
    [find.codec]
    [find.bencode]
-   [find.spec :as find.spec]
    [clojure.walk :refer [keywordize-keys]]))
 
 (do (set! *warn-on-reflection* true) (set! *unchecked-math* true))
 
 (defprotocol WireProtocol)
-
-(s/def ::wire-protocol #(and
-                         (satisfies? WireProtocol %)
-                         (instance? clojure.lang.IDeref %)))
-
-(s/def ::channel #(instance? clojure.core.async.impl.channels.ManyToManyChannel %))
 
 (s/def ::recv| ::channel)
 (s/def ::send| ::channel)
@@ -139,8 +131,8 @@
   (s/keys :req [::send|
                 ::recv|
                 ::metadata|
-                ::find.spec/infohashBA
-                ::find.spec/peer-idBA]
+                :infohashBA
+                :peer-idBA]
           :opt [::ex|]))
 
 (defn create
@@ -148,8 +140,8 @@
     :keys [::send|
            ::recv|
            ::metadata|
-           ::find.spec/infohashBA
-           ::find.spec/peer-idBA]}]
+           :infohashBA
+           :peer-idBA]}]
   {:pre [(s/assert ::create-wire-opts opts)]
    :post [(s/assert ::wire-protocol %)]}
   (let [stateV (volatile!

@@ -6,8 +6,7 @@
                                      pipeline pipeline-async]]
    [clojure.java.io :as io]
    [find.bytes]
-   [find.codec]
-   [find.spec :as find.spec]))
+   [find.codec]))
 
 (comment
 
@@ -15,7 +14,6 @@
    '[find.db :as find.db]
    '[find.bytes]
    '[find.codec]
-   '[find.spec :as find.spec]
    :reload)
 
   

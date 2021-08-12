@@ -1,8 +1,7 @@
 (ns find.bytes
   (:refer-clojure :exclude [alength byte-array concat aset-byte unchecked-int unchecked-byte])
   (:require
-   [find.protocols]
-   [find.spec :as find.spec])
+   [find.protocols])
   (:import
    (java.util Random BitSet Arrays)
    (java.nio ByteBuffer)
@@ -19,8 +18,8 @@
       (derive clojure.lang.Keyword ::keyword)
       (derive clojure.lang.IPersistentMap ::map)
       (derive clojure.lang.Sequential ::sequential)
-      (derive ByteArray ::find.spec/byte-array)
-      (derive java.nio.ByteBuffer ::find.spec/byte-buffer)))
+      (derive ByteArray :byte-array)
+      (derive java.nio.ByteBuffer :byte-buffer)))
 
 (defn random-bytes ^bytes
   [^Number length]
@@ -38,7 +37,7 @@
 
 (defmulti equals? (fn [x & more] (type x)) :hierarchy #'types)
 
-(defmethod equals? ::find.spec/byte-array ^Boolean
+(defmethod equals? :byte-array ^Boolean
   [byte-arr1 byte-arr2]
   (Arrays/equals ^bytes byte-arr1 ^bytes byte-arr2))
 
@@ -48,7 +47,7 @@
   [^String string]
   (.getBytes string "UTF-8"))
 
-(defmethod to-byte-array ::find.spec/byte-buffer ^bytes
+(defmethod to-byte-array :byte-buffer ^bytes
   ([^ByteBuffer buffer]
    (if (and
         (zero? (.position buffer))
@@ -65,11 +64,11 @@
 
 (defmulti to-string type :hierarchy #'types)
 
-(defmethod to-string ::find.spec/byte-array ^String
+(defmethod to-string :byte-array ^String
   [^bytes byte-arr]
   (String. byte-arr "UTF-8"))
 
-(defmethod to-string ::find.spec/byte-buffer ^String
+(defmethod to-string :byte-buffer ^String
   [^ByteBuffer buffer]
   (String. ^bytes (to-byte-array buffer) "UTF-8"))
 
@@ -84,14 +83,14 @@
 (defmulti concat
   (fn [xs] (type (first xs))) :hierarchy #'types)
 
-(defmethod concat ::find.spec/byte-array ^bytes
+(defmethod concat :byte-array ^bytes
   [byte-arrs]
   (with-open [out (java.io.ByteArrayOutputStream.)]
     (doseq [^bytes byte-arr byte-arrs]
       (.write out byte-arr))
     (.toByteArray out)))
 
-(defmethod concat ::find.spec/byte-buffer ^ByteBuffer
+(defmethod concat :byte-buffer ^ByteBuffer
   [buffers]
   (->
    (concat (map #(to-byte-array %) buffers))

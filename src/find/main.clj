@@ -17,7 +17,6 @@
    [find.codec]
    [find.bencode]
 
-   [find.spec :as find.spec]
    [find.seed]
 
    [find.db :as find.db]
@@ -34,10 +33,9 @@
 
 (println "clojure.core.async.pool-size" (System/getProperty "clojure.core.async.pool-size"))
 (println "clojure.compiler.direct-linking" (System/getProperty "clojure.compiler.direct-linking"))
-(clojure.spec.alpha/check-asserts true)
 (set! *warn-on-reflection* true)
 
-(defonce stateA (atom {::find.spec/searchS ""}))
+(defonce stateA (atom {:searchS ""}))
 
 (declare
  process-print-info
@@ -332,13 +330,12 @@
   (require
    '[expanse.bytes.core :as bytes.core]
    '[find.ipfs-dht :as find.ipfs-dht]
-   '[find.spec :as find.spec]
    '[find.db :as find.db]
    :reload)
 
   (-main)
 
-  (swap! stateA assoc ::find.spec/searchS "123")
+  (swap! stateA assoc :searchS "123")
 
   ;
   )

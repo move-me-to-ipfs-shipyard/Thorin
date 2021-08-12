@@ -13,7 +13,6 @@
    [find.codec]
    [find.datagram-socket]
    [find.protocols]
-   [find.spec :as find.spec]
    [find.bencode]
    [find.seed]))
 
@@ -218,11 +217,11 @@
   (let [ex| (chan 1)
         evt| (chan (sliding-buffer 10))
         socket (find.datagram-socket/create
-                {::find.spec/host host
-                 ::find.spec/port port
-                 ::find.spec/evt| evt|
-                 ::find.spec/msg| msg|
-                 ::find.spec/ex| ex|})
+                {:host host
+                 :port port
+                 :evt| evt|
+                 :msg| msg|
+                 :ex| ex|})
         release (fn []
                   (find.protocols/close* socket))]
     (go
