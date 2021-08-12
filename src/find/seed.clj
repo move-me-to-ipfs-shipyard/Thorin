@@ -140,7 +140,7 @@
       (when (find.fs/path-exists? filepath)
         (let [data-string (find.bytes/to-string (find.fs/read-file filepath))]
          ))
-      (catch Exception ex (println ::read-state-file ex)))))
+      (catch Exception ex (println :read-state-file ex)))))
 
 (defn write-state-file
   [filepath data]
@@ -149,7 +149,7 @@
       (let [data-string nil]
         (find.fs/make-parents filepath)
         (find.fs/write-file filepath data-string))
-      (catch Exception ex (println ::write-state-file ex)))))
+      (catch Exception ex (println :write-state-file ex)))))
 
 (defn send-krpc-request-fn
   [{:as opts

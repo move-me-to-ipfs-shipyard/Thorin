@@ -42,7 +42,7 @@
  process-count)
 
 (defn -main [& args]
-  (println ::-main)
+  (println :-main)
   (let [data-dir (find.fs/path-join (System/getProperty "user.dir") "data")
         state-filepath (find.fs/path-join data-dir "find.json")
         _ (swap! stateA merge
@@ -202,7 +202,7 @@
 
     #_(go
 
-        (println ::self-id self-id)
+        (println :self-id self-id)
 
         (find.bittorrent-dht/process-routing-table
          (merge state {:routing-table-max-size 128}))

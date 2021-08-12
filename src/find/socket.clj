@@ -16,7 +16,7 @@
   [{:as opts
     :keys [:port
            :host
-           ::socket-stream
+           :socket-stream
            :evt|
            :msg|
            :ex|]}]

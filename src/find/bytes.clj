@@ -13,11 +13,11 @@
 
 (defonce types
   (-> (make-hierarchy)
-      (derive java.lang.Number ::number)
-      (derive java.lang.String ::string)
-      (derive clojure.lang.Keyword ::keyword)
-      (derive clojure.lang.IPersistentMap ::map)
-      (derive clojure.lang.Sequential ::sequential)
+      (derive java.lang.Number :number)
+      (derive java.lang.String :string)
+      (derive clojure.lang.Keyword :keyword)
+      (derive clojure.lang.IPersistentMap :map)
+      (derive clojure.lang.Sequential :sequential)
       (derive ByteArray :byte-array)
       (derive java.nio.ByteBuffer :byte-buffer)))
 
@@ -43,7 +43,7 @@
 
 (defmulti to-byte-array (fn [x & more] (type x)) :hierarchy #'types)
 
-(defmethod to-byte-array ::string ^bytes
+(defmethod to-byte-array :string ^bytes
   [^String string]
   (.getBytes string "UTF-8"))
 
@@ -72,7 +72,7 @@
   [^ByteBuffer buffer]
   (String. ^bytes (to-byte-array buffer) "UTF-8"))
 
-(defmethod to-string ::string ^String
+(defmethod to-string :string ^String
   [^String string]
   string)
 

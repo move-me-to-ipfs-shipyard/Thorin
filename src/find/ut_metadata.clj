@@ -14,10 +14,10 @@
 
 (defprotocol WireProtocol)
 
-(s/def ::recv| ::channel)
-(s/def ::send| ::channel)
-(s/def ::ex| ::channel)
-(s/def ::metadata| ::channel)
+(s/def :recv| :channel)
+(s/def :send| :channel)
+(s/def :ex| :channel)
+(s/def :metadata| :channel)
 
 #_(defprotocol BufferCut
   (cut* [_ recv| expected-size]))
@@ -62,10 +62,10 @@
 
 (defn buffer-cut
   [{:as opts
-    :keys [::from|
-           ::expected-size|
-           ::to|
-           ::metadata|
+    :keys [:from|
+           :expected-size|
+           :to|
+           :metadata|
            :close?]}]
   (go
     (loop [buffersT (transient [])
@@ -127,19 +127,19 @@
   [infohashBA peer-idBA]
   (find.bytes/concat [pstrlenBA pstrBA reservedBA infohashBA peer-idBA]))
 
-(s/def ::create-wire-opts
-  (s/keys :req [::send|
-                ::recv|
-                ::metadata|
+(s/def :create-wire-opts
+  (s/keys :req [:send|
+                :recv|
+                :metadata|
                 :infohashBA
                 :peer-idBA]
-          :opt [::ex|]))
+          :opt [:ex|]))
 
 (defn create
   [{:as opts
-    :keys [::send|
-           ::recv|
-           ::metadata|
+    :keys [:send|
+           :recv|
+           :metadata|
            :infohashBA
            :peer-idBA]}]
   (let [stateV (volatile!
@@ -151,7 +151,7 @@
         cut| (chan 1)
 
         wire-protocol
-        ^{:type ::wire-protocol}
+        ^{:type :wire-protocol}
         (reify
           WireProtocol
           clojure.lang.IDeref
@@ -160,18 +160,18 @@
         release (fn []
                   (close! expected-size|))]
 
-    (buffer-cut {::from| recv|
-                 ::expected-size| expected-size|
-                 ::to| cut|
+    (buffer-cut {:from| recv|
+                 :expected-size| expected-size|
+                 :to| cut|
                  :close? true})
 
     (take! ex|
            (fn [ex]
-             #_(println ::ex (ex-message ex))
+             #_(println :ex (ex-message ex))
              (release)
-             (when (::ex| opts)
-               (put! (::ex| opts) ex))
-             #_(when-let [ex| (::ex| opts)]
+             (when (:ex| opts)
+               (put! (:ex| opts) ex))
+             #_(when-let [ex| (:ex| opts)]
                  (put! ex| ex))))
 
     (go
@@ -338,7 +338,7 @@
                           #_:request
                           0
                           (let []
-                            #_(println ::request data)
+                            #_(println :request data)
                             (when-let [ut-metadata-id (get-in stateT [:peer-extended-data :m :ut_metadata])]
                               (>! send| (extended-msg ut-metadata-id {:msg_type 2
                                                                       :piece (:piece data)})))
@@ -351,7 +351,7 @@
                                             (find.bytes/to-byte-array))  #_(-> payload-str (subs block-index) (find.bytes/to-byte-array))
                                 ut-metadata-size (get-in stateT [:peer-extended-data :metadata_size])
                                 downloaded (+ (:ut-metadata-downloaded stateT) (find.bytes/alength blockBA))]
-                            #_(println ::got-piece data downloaded (find.bytes/alength blockBA))
+                            #_(println :got-piece data downloaded (find.bytes/alength blockBA))
                             (cond
                               (== downloaded ut-metadata-size)
                               (let [metadataBA (find.bytes/concat (persistent! (conj! (:ut-metadata-pieces stateT) blockBA)))
@@ -386,7 +386,7 @@
                           #_:reject
                           2
                           (let [ut-metadata-id (get-in stateT [:peer-extended-data :m :ut_metadata])]
-                            #_(println ::got-reject data)
+                            #_(println :got-reject data)
                             (when (== 0 (:ut-metadata-max-rejects stateT))
                               (throw (ex-info "metadata request rejected" data nil)))
                             (>! send| (extended-msg ut-metadata-id {:msg_type 0
@@ -394,16 +394,16 @@
                             (recur (-> stateT
                                        (assoc! :ut-metadata-max-rejects (dec (:ut-metadata-max-rejects stateT))))))
 
-                          #_(println [::unsupported-ut-metadata-msg :ext-msg-id ext-msg-id])))
+                          #_(println [:unsupported-ut-metadata-msg :ext-msg-id ext-msg-id])))
 
                       :else
                       (let []
-                        #_(println [::unsupported-extension-msg :ext-msg-id ext-msg-id])
+                        #_(println [:unsupported-extension-msg :ext-msg-id ext-msg-id])
                         (recur stateT))))
 
                   :else
                   (let []
-                    #_(println [::unknown-message :msg-id msg-id :msg-length msg-length])
+                    #_(println [:unknown-message :msg-id msg-id :msg-length msg-length])
                     (recur stateT)))))))
 
         (catch Exception ex (put! ex| ex)))

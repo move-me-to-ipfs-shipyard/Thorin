@@ -61,8 +61,8 @@
           ([ex]
            (when ex
              (release)
-             (println ::ex ex)
-             (println ::exiting)))))
+             (println :ex ex)
+             (println :exiting)))))
       (release))))
 
 (defn process-messages

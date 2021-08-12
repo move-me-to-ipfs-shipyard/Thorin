@@ -67,7 +67,7 @@
 
       (go
         (when-let [evt (<! evt|)]
-          #_(println ::socket evt))
+          #_(println :socket evt))
         (loop []
           (alt!
             socket-ex|

@@ -14,37 +14,37 @@
   (fn
     ([data out]
      (cond
-       (find.bytes/byte-array? data) ::byte-array
-       (number? data) ::number
-       (string? data) ::string
-       (keyword? data) ::keyword
-       (map? data) ::map
-       (sequential? data) ::sequential))
+       (find.bytes/byte-array? data) :byte-array
+       (number? data) :number
+       (string? data) :string
+       (keyword? data) :keyword
+       (map? data) :map
+       (sequential? data) :sequential))
     ([data out dispatch-val]
      dispatch-val)))
 
-(defmethod encode* ::number
+(defmethod encode* :number
   [number out]
   (find.protocols/write-byte* out i-byte)
   (find.protocols/write-byte-array* out (find.bytes/to-byte-array (str number)))
   (find.protocols/write-byte* out e-byte))
 
-(defmethod encode* ::string
+(defmethod encode* :string
   [string out]
   (encode* (find.bytes/to-byte-array string) out))
 
-(defmethod encode* ::keyword
+(defmethod encode* :keyword
   [kword out]
   (encode* (find.bytes/to-byte-array (name kword)) out))
 
-(defmethod encode* ::sequential
+(defmethod encode* :sequential
   [coll out]
   (find.protocols/write-byte* out l-byte)
   (doseq [item coll]
     (encode* item out))
   (find.protocols/write-byte* out e-byte))
 
-(defmethod encode* ::map
+(defmethod encode* :map
   [mp out]
   (find.protocols/write-byte* out d-byte)
   (doseq [[k v] (into (sorted-map) mp)]
@@ -52,7 +52,7 @@
     (encode* v out))
   (find.protocols/write-byte* out e-byte))
 
-(defmethod encode* ::byte-array
+(defmethod encode* :byte-array
   [byte-arr out]
   (find.protocols/write-byte-array* out (-> byte-arr (find.bytes/alength) (str) (find.bytes/to-byte-array)))
   (find.protocols/write-byte* out colon-byte)
@@ -69,7 +69,7 @@
   [in]
   (let [byte (find.protocols/read* in)]
     (when (== -1 byte)
-      (throw (ex-info (str ::decode* " unexpected end of InputStream") {})))
+      (throw (ex-info (str :decode* " unexpected end of InputStream") {})))
     (find.protocols/unread* in byte)
     byte))
 
@@ -77,14 +77,14 @@
   (fn
     ([in out]
      (condp = (peek-next in)
-       i-byte ::integer
-       l-byte ::list
-       d-byte ::dictionary
-       :else ::byte-array))
+       i-byte :integer
+       l-byte :list
+       d-byte :dictionary
+       :else :byte-array))
     ([in out dispatch-val]
      dispatch-val)))
 
-(defmethod decode* ::dictionary
+(defmethod decode* :dictionary
   [in
    out
    & args]
@@ -101,21 +101,21 @@
 
         (== byte i-byte)
         (if (even? (count result))
-          (ex-info (str ::decode*-dictionary " bencode keys must be strings, got integer") {})
-          (recur (conj! result  (decode* in out ::integer))))
+          (ex-info (str :decode*-dictionary " bencode keys must be strings, got integer") {})
+          (recur (conj! result  (decode* in out :integer))))
 
         (== byte d-byte)
         (if (even? (count result))
-          (ex-info (str ::decode*-dictionary " bencode keys must be strings, got dictionary") {})
-          (recur (conj! result  (decode* in out ::dictionary))))
+          (ex-info (str :decode*-dictionary " bencode keys must be strings, got dictionary") {})
+          (recur (conj! result  (decode* in out :dictionary))))
 
         (== byte l-byte)
         (if (even? (count result))
-          (ex-info (str ::decode*-dictionary " bencode keys must be strings, got list") {})
-          (recur (conj! result  (decode* in out ::list))))
+          (ex-info (str :decode*-dictionary " bencode keys must be strings, got list") {})
+          (recur (conj! result  (decode* in out :list))))
 
         :else
-        (let [byte-arr (decode* in out ::byte-array)
+        (let [byte-arr (decode* in out :byte-array)
               next-element (if (even? (count result))
                              #_its_a_key
                              (find.bytes/to-string byte-arr)
@@ -123,7 +123,7 @@
                              byte-arr)]
           (recur (conj! result next-element)))))))
 
-(defmethod decode* ::list
+(defmethod decode* :list
   [in
    out
    & args]
@@ -139,18 +139,18 @@
           (persistent! result))
 
         (== byte i-byte)
-        (recur (conj! result (decode* in out ::integer)))
+        (recur (conj! result (decode* in out :integer)))
 
         (== byte d-byte)
-        (recur (conj! result  (decode* in out ::dictionary)))
+        (recur (conj! result  (decode* in out :dictionary)))
 
         (== byte l-byte)
-        (recur (conj! result  (decode* in out ::list)))
+        (recur (conj! result  (decode* in out :list)))
 
         :else
-        (recur (conj! result (decode* in out ::byte-array)))))))
+        (recur (conj! result (decode* in out :byte-array)))))))
 
-(defmethod decode* ::integer
+(defmethod decode* :integer
   [in
    out
    & args]
@@ -176,7 +176,7 @@
                 (find.protocols/write-byte* out byte)
                 (recur))))))
 
-(defmethod decode* ::byte-array
+(defmethod decode* :byte-array
   [in
    out
    & args]
