@@ -8,4 +8,3 @@ i am find program, i say:
 - extension - i am an extension of existing torrent network
 - i do download files
 - system tray - i say no, i run in foreground
-- database - i use datahike
