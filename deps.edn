@@ -3,7 +3,9 @@
         org.clojure/core.async {:mvn/version "1.3.618"}}
  :aliases
  {
-
+  :repl {:extra-deps {ripley/ripley {:git/url "https://github.com/empire-strikes-back/ripley"
+                                     :sha "e8a6b05870e60a6d43a0ec734b051a73ca2ff715"} }}
+  
  }
 
 }
