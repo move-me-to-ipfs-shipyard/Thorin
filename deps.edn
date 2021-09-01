@@ -9,6 +9,8 @@
   :uberjar {:extra-deps {genie/genie {:git/url "https://github.com/empire-strikes-back/genie"
                                       :sha "e0332b6bb6bdf26023f0629cfa793170e1962e01"} }}
 
+  :identicon {:extra-deps {zazu/zazu {:git/url "https://github.com/empire-strikes-back/zazu"
+                                      :sha "6540c0adb4e360fce21e2114c23a858e36e3e0a4"} }}
  }
 
 }
