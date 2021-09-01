@@ -8,7 +8,9 @@ repl(){
 }
 
 main(){
-  echo 1
+  clojure \
+    -J-Dclojure.core.async.pool-size=1 \
+    -M -m find.main
 }
 
 uberjar(){
