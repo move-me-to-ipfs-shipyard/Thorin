@@ -6,6 +6,9 @@
   :repl {:extra-deps {ripley/ripley {:git/url "https://github.com/empire-strikes-back/ripley"
                                      :sha "e8a6b05870e60a6d43a0ec734b051a73ca2ff715"} }}
   
+  :uberjar {:extra-deps {genie/genie {:git/url "https://github.com/empire-strikes-back/genie"
+                                      :sha "e0332b6bb6bdf26023f0629cfa793170e1962e01"} }}
+
  }
 
 }

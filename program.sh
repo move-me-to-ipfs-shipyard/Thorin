@@ -14,7 +14,12 @@ main(){
 }
 
 uberjar(){
-  echo 1
+
+  clojure \
+    -X:uberjar genie.core/process \
+    :main-ns find.main \
+    :filename '"out/find.jar"' \
+    :paths '["src" "out/identicon"]'
 }
 
 release(){
