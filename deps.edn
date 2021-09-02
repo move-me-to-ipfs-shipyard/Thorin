@@ -1,6 +1,9 @@
 {:paths ["src"]
  :deps {org.clojure/clojure {:mvn/version "1.10.3"}
-        org.clojure/core.async {:mvn/version "1.3.618"}}
+        org.clojure/core.async {:mvn/version "1.3.618"}
+        
+        commons-codec/commons-codec {:mvn/version "1.15"}
+        }
  :aliases
  {
   :repl {:extra-deps {ripley/ripley {:git/url "https://github.com/empire-strikes-back/ripley"
