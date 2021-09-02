@@ -107,7 +107,33 @@
 
 (defmethod decode* :dictionary
   [^PushbackInputStream pbis & args]
+  (let []
+    (.read pbis)
+    (loop [resultT (transient [])]
+      (let [byte (.read pbis)]
+        (.unread pbis)
+        (cond
+          (odd? (count resultT))
+          (recur (conj! resultT (decode* pbis :string))) 
+          
+          (== byte i-int)
+          (recur (conj! resultT (decode* pbis :integer)))
 
+          (== byte d-int)
+          (recur (conj! resultT (decode* pbis :dictionary)))
+
+          (== byte l-int)
+          (recur (conj! resultT (decode* pbis :list)))
+
+          (== byte e-int)
+          (let []
+            (.read pbis)
+            (apply array-map (persistent! resultT))
+          )
+        )
+      )
+    )
+  )
 )
 
 (defmethod decode* :list
