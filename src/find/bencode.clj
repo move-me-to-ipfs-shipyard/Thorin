@@ -77,6 +77,24 @@
   )
 )
 
+(defn read-until ^bytes
+   [^PushbackInputStream pbis ^int target-byte]
+  (let [baos (ByteArrayOutputStream.)]
+    (loop [byte (.read pbis)]
+      (cond
+        (== byte target-byte)
+        (.toByteArray baos)
+
+        :else
+        (let []
+          (.write baos byte)
+          (recur (.read pbis))
+        )
+      )
+    )
+  )
+)
+
 (defmulti decode*
   (fn 
     ([byte-arr ^PushbackInputStream pbis]
@@ -95,14 +113,22 @@
   )
 )
 
-(defmethod decode* :byte-arr
+(defmethod decode* :byte-arr ^bytes
   [^PushbackInputStream pbis & args]
-
+  (let [sizeBA (read-until pbis colon-int)
+        size (Integer/parseInt (String. sizeBA "UTF-8"))
+        dataBA (.readNBytes pbis size)]
+    dataBA
+  )
 )
 
-(defmethod decode* :integer
+(defmethod decode* :integer ^int
   [^PushbackInputStream pbis & args]
-
+  (.read pbis)
+  (let [byte-arr (read-until pbis e-int)]
+    (.read pbis)
+    (Integer/parseInt (String. byte-arr "UTF-8"))
+  )
 )
 
 (defmethod decode* :dictionary
@@ -138,7 +164,34 @@
 
 (defmethod decode* :list
   [^PushbackInputStream pbis & args]
+  (let []
+    (.read pbis)
+    (loop [resultT (transient [])]
+      (let [byte (.read pbis)]
+        (.unread pbis)
+        (cond
+          
+          (== byte i-int)
+          (recur (conj! resultT (decode* pbis :integer)))
 
+          (== byte d-int)
+          (recur (conj! resultT (decode* pbis :dictionary)))
+
+          (== byte l-int)
+          (recur (conj! resultT (decode* pbis :list)))
+
+          (== byte e-int)
+          (let []
+            (.read pbis)
+            (persistent! resultT)
+          )
+
+          :else
+          (recur (conj! resultT (decode* pbis :string))) 
+        )
+      )
+    )
+  )
 )
 
 (defn decode
@@ -147,7 +200,7 @@
               (ByteArrayInputStream. byte-arr)
               (PushbackInputStream.)
               ) ]
-    (decode* byte-arr pbis)
+    (decode* pbis)
   )
 )
 
