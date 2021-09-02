@@ -9,13 +9,14 @@
   )
   (:import
     (java.io ByteArrayOutputStream ByteArrayInputStream PushbackInputStream)
+    (org.apache.commons.codec.binary Hex)
   )
 )
 
 (def i-int (int \i))
 (def e-int (int \e))
 (def d-int (int \d))
-(def l-int (int \d))
+(def l-int (int \l))
 (def colon-int (int \:))
 
 (defmulti encode* 
@@ -85,7 +86,10 @@
     (loop [byte (.read pbis)]
       (cond
         (== byte target-byte)
-        (.toByteArray baos)
+        (let []
+          (.unread pbis byte)
+          (.toByteArray baos)
+        )
 
         :else
         (let []
@@ -119,8 +123,17 @@
   [^PushbackInputStream pbis & args]
   (let [sizeBA (read-until pbis colon-int)
         size (Integer/parseInt (String. sizeBA "UTF-8"))
+        _ (.read pbis)
         dataBA (.readNBytes pbis size)]
     dataBA
+  )
+)
+
+(defmethod decode* :string ^String
+  [^PushbackInputStream pbis & args]
+  (->
+    (decode* pbis :byte-arr)
+    (String. "UTF-8")
   )
 )
 
@@ -141,7 +154,14 @@
       (let [byte (.read pbis)]
         (.unread pbis byte)
         (cond
-          (odd? (count resultT))
+
+          (== byte e-int)
+          (let [result (apply array-map (persistent! resultT))]
+            (.read pbis)
+            result
+          )
+
+          (even? (count resultT))
           (recur (conj! resultT (decode* pbis :string))) 
           
           (== byte i-int)
@@ -153,11 +173,9 @@
           (== byte l-int)
           (recur (conj! resultT (decode* pbis :list)))
 
-          (== byte e-int)
-          (let []
-            (.read pbis)
-            (apply array-map (persistent! resultT))
-          )
+          :else
+          (recur (conj! resultT (decode* pbis :byte-arr)))
+
         )
       )
     )
@@ -172,6 +190,12 @@
       (let [byte (.read pbis)]
         (.unread pbis byte)
         (cond
+
+          (== byte e-int)
+          (let []
+            (.read pbis)
+            (persistent! resultT)
+          )
           
           (== byte i-int)
           (recur (conj! resultT (decode* pbis :integer)))
@@ -182,14 +206,8 @@
           (== byte l-int)
           (recur (conj! resultT (decode* pbis :list)))
 
-          (== byte e-int)
-          (let []
-            (.read pbis)
-            (persistent! resultT)
-          )
-
           :else
-          (recur (conj! resultT (decode* pbis :string))) 
+          (recur (conj! resultT (decode* pbis :byte-arr))) 
         )
       )
     )
@@ -214,15 +232,26 @@
 
   (find.main/reload)
 
-  (let [msg {:t (find.seed/random-bytes 4) 
-             :r {:id (find.seed/random-bytes 20) :a 1} 
-             :b 2}]
-    (-> msg
-      (clojure.walk/stringify-keys)
-      (encode)
-      #_(decode)
-      #_(clojure.walk/keywordize-keys)
-    )
-  )
+  (Hex/encodeHexString (find.seed/random-bytes 20))
 
+  (let [txn-id (Hex/decodeHex "aabb")
+        id (Hex/decodeHex "f6212aa693453ce52ffa51f41457b2c5633a045c")
+        msg {:t txn-id 
+             :r {:id id :a 1} 
+             :b 2
+             :list [2 {:c 4}]}
+        encoded (-> msg
+                  (clojure.walk/stringify-keys)
+                  (encode)
+                )
+        _ (println (String. encoded "UTF-8"))
+        decoded (-> encoded
+                  (decode)
+                  (clojure.walk/keywordize-keys)
+                )
+        walk-bytes-to-hex (fn [data] (clojure.walk/postwalk (fn [form] (if (bytes? form) (Hex/encodeHexString form) form)) data) )
+        ]
+    (println (walk-bytes-to-hex decoded))
+    (println (walk-bytes-to-hex msg))
+  )
 )
