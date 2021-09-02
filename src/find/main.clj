@@ -56,7 +56,7 @@
   []
   (require 
     '[find.main]
-    :reload)
+    :reload-all)
 )
 
 (defn -main
