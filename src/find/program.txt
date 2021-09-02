@@ -7,3 +7,4 @@ i discover other find programs in torrent network to exchange index of files
 i extend existing dht messages to discover other find programs
 i have no filters
 i search by file name and sort by seeders
+my search result is simple list of file names, no images
