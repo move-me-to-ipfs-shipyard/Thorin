@@ -5,3 +5,9 @@
     [clojure.string]
     [clojure.java.io :as io])
 )
+
+(def i-int (int \i))
+(def e-int (int \e))
+(def d-int (int \d))
+(def l-int (int \d))
+(def colon-int (int \:))
