@@ -4,6 +4,8 @@
                                       pub sub unsub mix admix unmix dropping-buffer sliding-buffer pipeline pipeline-async to-chan! thread]]
     [clojure.string]
     [clojure.java.io :as io]
+    [clojure.walk]
+    [find.seed]
   )
   (:import
     (java.io ByteArrayOutputStream ByteArrayInputStream PushbackInputStream)
@@ -17,7 +19,7 @@
 (def colon-int (int \:))
 
 (defmulti encode* 
-  (fn 
+  (fn encode*-dispatch-fn
     ([value baos] 
       (cond
         (bytes? value) :byte-arr
@@ -40,11 +42,11 @@
 
 (defmethod encode* :string
   [^String value ^ByteArrayOutputStream baos & args]
-  (encode* baos (.getBytes value "UTF-8") :byte-arr)
+  (encode* (.getBytes value "UTF-8") baos :byte-arr)
 )
 
 (defmethod encode* :integer
-  [^int value ^ByteArrayOutputStream baos & args]
+  [^Integer value ^ByteArrayOutputStream baos & args]
   (.write baos i-int)
   (.writeBytes baos (-> value (str) (.getBytes "UTF-8")))
   (.write baos e-int)
@@ -78,7 +80,7 @@
 )
 
 (defn read-until ^bytes
-   [^PushbackInputStream pbis ^int target-byte]
+   [^PushbackInputStream pbis ^Integer target-byte]
   (let [baos (ByteArrayOutputStream.)]
     (loop [byte (.read pbis)]
       (cond
@@ -96,8 +98,8 @@
 )
 
 (defmulti decode*
-  (fn 
-    ([byte-arr ^PushbackInputStream pbis]
+  (fn decode*-dispatch-fn
+    ([^PushbackInputStream pbis]
       (let [byte (.read pbis)]
         (.unread pbis byte)
         (condp == byte
@@ -109,7 +111,7 @@
         )
       )
     )
-    ([byte-arr pbis dispatch-value] dispatch-value)
+    ([pbis dispatch-value] dispatch-value)
   )
 )
 
@@ -122,7 +124,7 @@
   )
 )
 
-(defmethod decode* :integer ^int
+(defmethod decode* :integer ^Integer
   [^PushbackInputStream pbis & args]
   (.read pbis)
   (let [byte-arr (read-until pbis e-int)]
@@ -137,7 +139,7 @@
     (.read pbis)
     (loop [resultT (transient [])]
       (let [byte (.read pbis)]
-        (.unread pbis)
+        (.unread pbis byte)
         (cond
           (odd? (count resultT))
           (recur (conj! resultT (decode* pbis :string))) 
@@ -168,7 +170,7 @@
     (.read pbis)
     (loop [resultT (transient [])]
       (let [byte (.read pbis)]
-        (.unread pbis)
+        (.unread pbis byte)
         (cond
           
           (== byte i-int)
@@ -208,6 +210,19 @@
 
 (comment
 
+  (in-ns 'find.bencode)
 
+  (find.main/reload)
+
+  (let [msg {:t (find.seed/random-bytes 4) 
+             :r {:id (find.seed/random-bytes 20) :a 1} 
+             :b 2}]
+    (-> msg
+      (clojure.walk/stringify-keys)
+      (encode)
+      #_(decode)
+      #_(clojure.walk/keywordize-keys)
+    )
+  )
 
 )
