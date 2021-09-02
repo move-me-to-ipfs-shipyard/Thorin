@@ -10,7 +10,8 @@
     [find.datagram]
     [find.bencode]
     [find.metadata]
-    )
+    [find.dht]
+  )
   (:import
     (javax.swing JFrame WindowConstants ImageIcon JTextField JPanel)
   )    
