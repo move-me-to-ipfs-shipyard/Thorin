@@ -7,6 +7,7 @@
     [clojure.java.io :as io]
     
     [find.seed]
+    [find.datagram]
     )
   (:import
     (javax.swing JFrame WindowConstants ImageIcon JTextField JPanel)
