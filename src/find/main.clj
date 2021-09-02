@@ -9,7 +9,7 @@
     [find.seed]
     [find.datagram]
     [find.bencode]
-    [find.ut-metadata]
+    [find.metadata]
     )
   (:import
     (javax.swing JFrame WindowConstants ImageIcon JTextField JPanel)
