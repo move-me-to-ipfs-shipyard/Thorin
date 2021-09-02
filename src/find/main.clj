@@ -8,6 +8,7 @@
     
     [find.seed]
     [find.datagram]
+    [find.bencode]
     )
   (:import
     (javax.swing JFrame WindowConstants ImageIcon JTextField JPanel)
