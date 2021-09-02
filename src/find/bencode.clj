@@ -22,19 +22,58 @@
       (cond
         (bytes? value) :byte-arr
         (string? value) :string
-        (map? value) :map
+        (map? value) :dictionary
         (sequential? value) :list
-        (int? value) :int
+        (int? value) :integer
       )
     )
     ([value baos dispatch-value] dispatch-value)
   )
 )
 
-(defn encode
+(defmethod encode* :byte-arr
+  [^bytes value ^ByteArrayOutputStream baos & args]
+  (.writeBytes baos (-> (alength value) (str) (.getBytes "UTF-8")))
+  (.write baos colon-int)
+  (.writeBytes baos value)
+)
+
+(defmethod encode* :string
+  [^String value ^ByteArrayOutputStream baos & args]
+  (encode* baos (.getBytes value "UTF-8") :byte-arr)
+)
+
+(defmethod encode* :integer
+  [^int value ^ByteArrayOutputStream baos & args]
+  (.write baos i-int)
+  (.writeBytes baos (-> value (str) (.getBytes "UTF-8")))
+  (.write baos e-int)
+)
+
+(defmethod encode* :dictionary
+  [value ^ByteArrayOutputStream baos & args]
+  (.write baos d-int)
+  (doseq [[k v] value]
+    (encode* (str k) baos)
+    (encode* v baos)
+  )
+  (.write baos e-int)
+)
+
+(defmethod encode* :list
+  [value ^ByteArrayOutputStream baos & args]
+  (.write baos l-int)
+  (doseq [v value]
+    (encode* v baos)
+  )
+  (.write baos e-int)
+)
+
+(defn encode ^bytes
   [data]
   (let [baos (ByteArrayOutputStream.)]
     (encode* data baos)
+    (.toByteArray baos)
   )
 )
 
@@ -43,7 +82,7 @@
 )
 
 (defn decode
-  [byte-arr]
+  [^bytes byte-arr]
   (let [bais (-> 
               (ByteArrayInputStream. byte-arr)
               (PushbackInputStream.)
