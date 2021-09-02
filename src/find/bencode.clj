@@ -78,16 +78,50 @@
 )
 
 (defmulti decode*
-  (fn [byte-arr bais] )
+  (fn 
+    ([byte-arr ^PushbackInputStream pbis]
+      (let [byte (.read pbis)]
+        (.unread pbis byte)
+        (condp == byte
+          -1 (throw (ex-info "input stream ends unexpectedly" {}))
+          d-int :dictionary
+          i-int :integer
+          l-int :list
+          :else :byte-arr
+        )
+      )
+    )
+    ([byte-arr pbis dispatch-value] dispatch-value)
+  )
+)
+
+(defmethod decode* :byte-arr
+  [^PushbackInputStream pbis & args]
+
+)
+
+(defmethod decode* :integer
+  [^PushbackInputStream pbis & args]
+
+)
+
+(defmethod decode* :dictionary
+  [^PushbackInputStream pbis & args]
+
+)
+
+(defmethod decode* :list
+  [^PushbackInputStream pbis & args]
+
 )
 
 (defn decode
   [^bytes byte-arr]
-  (let [bais (-> 
+  (let [pbis (-> 
               (ByteArrayInputStream. byte-arr)
               (PushbackInputStream.)
               ) ]
-    (decode* byte-arr bais)
+    (decode* byte-arr pbis)
   )
 )
 
