@@ -5,3 +5,4 @@ i use dht only to discover files
 i store complete index of files on each computer i run on
 i discover other find programs in torrent network to exchange index of files
 i extend existing dht messages to discover other find programs
+i have no filters
