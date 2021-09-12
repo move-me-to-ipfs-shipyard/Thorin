@@ -1,4 +1,4 @@
-i am find program, i say:
+i am Find program, i say:
 
 i continously discover files in torrent network
 i use dht only to discover files

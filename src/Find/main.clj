@@ -1,4 +1,4 @@
-(ns find.main
+(ns Find.main
   (:gen-class)
   (:require 
     [clojure.core.async :as a :refer [<! >! <!! >!! chan put! take! go alt! alts! do-alts close! timeout pipe mult tap untap 
@@ -6,11 +6,11 @@
     [clojure.string]
     [clojure.java.io :as io]
     
-    [find.seed]
-    [find.datagram]
-    [find.bencode]
-    [find.metadata]
-    [find.dht]
+    [Find.seed]
+    [Find.datagram]
+    [Find.bencode]
+    [Find.metadata]
+    [Find.dht]
   )
   (:import
     (javax.swing JFrame WindowConstants ImageIcon JTextField JPanel)
@@ -26,7 +26,7 @@
 
 (defn window
   []
-  (let [jframe (JFrame. "i am find program")
+  (let [jframe (JFrame. "i am Find program")
         input (JTextField. 100)
         jpanel (JPanel.)]
 
@@ -46,7 +46,7 @@
     (.setVisible true)
   )
 
-  (alter-var-root #'find.main/jframe (constantly jframe))
+  (alter-var-root #'Find.main/jframe (constantly jframe))
 
   nil
   )
@@ -55,7 +55,7 @@
 (defn reload
   []
   (require 
-    '[find.main]
+    '[Find.main]
     :reload-all)
 )
 

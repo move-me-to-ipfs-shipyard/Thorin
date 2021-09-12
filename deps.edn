@@ -6,14 +6,14 @@
         }
  :aliases
  {
-  :repl {:extra-deps {ripley/ripley {:git/url "https://github.com/empire-strikes-back/ripley"
-                                     :sha "e8a6b05870e60a6d43a0ec734b051a73ca2ff715"} }}
+  :repl {:extra-deps {Ripley/Ripley {:git/url "https://github.com/Empire-Strikes-Back/Ripley"
+                                     :sha "becd2573ab55d42933134d346bc46cdd8fa08c04"} }}
   
-  :uberjar {:extra-deps {genie/genie {:git/url "https://github.com/empire-strikes-back/genie"
-                                      :sha "e0332b6bb6bdf26023f0629cfa793170e1962e01"} }}
+  :uberjar {:extra-deps {Genie/Genie {:git/url "https://github.com/Empire-Strikes-Back/Genie"
+                                      :sha "5b2d4531a5dd934b86e39647a0e5282c52b648a6"} }}
 
-  :identicon {:extra-deps {zazu/zazu {:git/url "https://github.com/empire-strikes-back/zazu"
-                                      :sha "6540c0adb4e360fce21e2114c23a858e36e3e0a4"} }}
+  :identicon {:extra-deps {Zazu/Zazu {:git/url "https://github.com/Empire-Strikes-Back/Zazu"
+                                      :sha "063ef7649c01284be8f5a1e9814d5bf83025ad76"} }}
  }
 
 }

@@ -3,28 +3,28 @@
 repl(){
   clj \
     -J-Dclojure.core.async.pool-size=1 \
-    -X:repl ripley.core/process \
-    :main-ns find.main
+    -X:repl Ripley.core/process \
+    :main-ns Find.main
 }
 
 main(){
   clojure \
     -J-Dclojure.core.async.pool-size=1 \
-    -M -m find.main
+    -M -m Find.main
 }
 
 uberjar(){
 
   clojure \
-    -X:identicon zazu.core/process \
-    :word '"find"' \
+    -X:identicon Zazu.core/process \
+    :word '"Find"' \
     :filename '"out/identicon/icon.png"' \
     :size 256
 
   clojure \
-    -X:uberjar genie.core/process \
-    :main-ns find.main \
-    :filename '"out/find.jar"' \
+    -X:uberjar Genie.core/process \
+    :main-ns Find.main \
+    :filename '"out/Find.jar"' \
     :paths '["src" "out/identicon"]'
 }
 

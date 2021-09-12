@@ -1,5 +1,5 @@
 [user]
-    name = find
-    email = find@program
+    name = Find
+    email = Find@program
 
 # git config --local include.path "../.gitconfig"

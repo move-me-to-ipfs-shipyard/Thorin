@@ -1,11 +1,11 @@
-(ns find.bencode
+(ns Find.bencode
   (:require 
     [clojure.core.async :as a :refer [<! >! <!! >!! chan put! take! go alt! alts! do-alts close! timeout pipe mult tap untap 
                                       pub sub unsub mix admix unmix dropping-buffer sliding-buffer pipeline pipeline-async to-chan! thread]]
     [clojure.string]
     [clojure.java.io :as io]
     [clojure.walk]
-    [find.seed]
+    [Find.seed]
   )
   (:import
     (java.io ByteArrayOutputStream ByteArrayInputStream PushbackInputStream)
@@ -228,11 +228,11 @@
 
 (comment
 
-  (in-ns 'find.bencode)
+  (in-ns 'Find.bencode)
 
-  (find.main/reload)
+  (Find.main/reload)
 
-  (Hex/encodeHexString (find.seed/random-bytes 20))
+  (Hex/encodeHexString (Find.seed/random-bytes 20))
 
   (let [txn-id (Hex/decodeHex "aabb")
         id (Hex/decodeHex "f6212aa693453ce52ffa51f41457b2c5633a045c")
