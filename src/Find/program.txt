@@ -8,3 +8,4 @@ i extend existing dht messages to discover other find programs
 i have no filters
 i search by file name and sort by seeders
 my search result is simple list of file names, no images
+i neither store nor need any user data - i store only torrent files index
