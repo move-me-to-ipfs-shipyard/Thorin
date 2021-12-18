@@ -1,5 +1,6 @@
-i am find program - i search and download torrent files
+we don't want any adventures here! thank you, not today, not - good morning
 
+- i search and download torrent files
 - i am decentralized peer-to-peer program to search and download torrent files
 - search - i search by file name, i sort by seeders/leechers, i output a list of file names, no images
 - language - my language is clojure
