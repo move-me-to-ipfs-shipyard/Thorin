@@ -5,7 +5,8 @@
         org.clojure/core.async {:mvn/version "1.3.618"}
         aleph/aleph {:mvn/version "0.4.7-alpha5"}
         byte-streams/byte-streams {:mvn/version "0.2.5-alpha2"}
-        manifold/manifold {:mvn/version "0.1.9-alpha3"}}
+        manifold/manifold {:mvn/version "0.1.9-alpha3"}
+        io.replikativ/datahike {:mvn/version "0.3.6"}}
 
  :aliases
  {:repl
