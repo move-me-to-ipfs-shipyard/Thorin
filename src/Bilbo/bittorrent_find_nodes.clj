@@ -1,13 +1,13 @@
-(ns find.bittorrent-find-nodes
+(ns Bilbo.bittorrent-find-nodes
   (:require
    [clojure.core.async :as a :refer [chan go go-loop <! >!  take! put! offer! poll! alt! alts! close!
                                      pub sub unsub mult tap untap mix admix unmix pipe
                                      timeout to-chan  sliding-buffer dropping-buffer
                                      pipeline pipeline-async]]
    [clojure.core.async.impl.protocols :refer [closed?]]
-   [find.bytes]
-   [find.codec]
-   [find.seed]))
+   [Bilbo.bytes]
+   [Bilbo.codec]
+   [Bilbo.seed]))
 
 (do (set! *warn-on-reflection* true) (set! *unchecked-math* true))
 
@@ -28,11 +28,11 @@
          (doseq [node nodes-bootstrap]
            (take!
             (send-krpc-request
-             {:t (find.bytes/random-bytes 4)
+             {:t (Bilbo.bytes/random-bytes 4)
               :y "q"
               :q "find_node"
               :a {:id self-idBA
-                  :target self-idBA #_(find.seed/gen-neighbor-id (.randomBytes crypto 20) self-idB)}}
+                  :target self-idBA #_(Bilbo.seed/gen-neighbor-id (.randomBytes crypto 20) self-idB)}}
              node
              (timeout 2000))
             (fn [{:keys [msg] :as value}]
@@ -44,11 +44,11 @@
              (<! (timeout 500))
              (take!
               (send-krpc-request
-               {:t (find.bytes/random-bytes 4)
+               {:t (Bilbo.bytes/random-bytes 4)
                 :y "q"
                 :q "find_node"
                 :a {:id self-idBA
-                    :target (find.codec/hex-to-bytes id)  #_(find.seed/gen-neighbor-id (.randomBytes crypto 20) self-idB)}}
+                    :target (Bilbo.codec/hex-to-bytes id)  #_(Bilbo.seed/gen-neighbor-id (.randomBytes crypto 20) self-idB)}}
                node
                (timeout 2000))
               (fn [{:keys [msg] :as value}]
@@ -84,14 +84,14 @@
                                (take 1))
                               (:routing-table state))]
              (swap! stateA update-in [:routing-table-find-noded] assoc id {:node node
-                                                                           :timestamp (find.seed/now)})
+                                                                           :timestamp (Bilbo.seed/now)})
              (take!
               (send-krpc-request
-               {:t (find.bytes/random-bytes 4)
+               {:t (Bilbo.bytes/random-bytes 4)
                 :y "q"
                 :q "find_node"
                 :a {:id self-idBA
-                    :target self-idBA #_(find.seed/gen-neighbor-id (.randomBytes crypto 20) self-idB)}}
+                    :target self-idBA #_(Bilbo.seed/gen-neighbor-id (.randomBytes crypto 20) self-idB)}}
                node
                (timeout 2000))
               (fn [{:keys [msg ] :as value}]
@@ -108,14 +108,14 @@
                                 (take 1))))]
              (<! (timeout 400))
              (swap! stateA update-in [:routing-table-find-noded] assoc id {:node node
-                                                                           :timestamp (find.seed/now)})
+                                                                           :timestamp (Bilbo.seed/now)})
              (take!
               (send-krpc-request
-               {:t (find.bytes/random-bytes 4)
+               {:t (Bilbo.bytes/random-bytes 4)
                 :y "q"
                 :q "find_node"
                 :a {:id self-idBA
-                    :target (find.codec/hex-to-bytes k)  #_(find.seed/gen-neighbor-id (.randomBytes crypto 20) self-idB)}}
+                    :target (Bilbo.codec/hex-to-bytes k)  #_(Bilbo.seed/gen-neighbor-id (.randomBytes crypto 20) self-idB)}}
                node
                (timeout 2000))
               (fn [{:keys [msg] :as value}]

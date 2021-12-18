@@ -1,4 +1,4 @@
-(ns find.expanse)
+(ns Bilbo.expanse)
 
 (do (set! *warn-on-reflection* true) (set! *unchecked-math* true))
 

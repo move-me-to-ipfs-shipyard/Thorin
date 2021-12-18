@@ -1,7 +1,7 @@
-(ns find.bytes
+(ns Bilbo.bytes
   (:refer-clojure :exclude [alength byte-array concat aset-byte unchecked-int unchecked-byte])
   (:require
-   [find.protocols])
+   [Bilbo.protocols])
   (:import
    (java.util Random BitSet Arrays)
    (java.nio ByteBuffer)
@@ -292,7 +292,7 @@
   (clojure.core/aget byte-arr ^int idx))
 
 (deftype TPushbackInputStream [^PushbackInputStream in]
-  find.protocols/IPushbackInputStream
+  Bilbo.protocols/IPushbackInputStream
   (read*
     [_]
     (.read in))
@@ -322,7 +322,7 @@
    (TPushbackInputStream.)))
 
 (deftype TByteArrayOutputStream [^ByteArrayOutputStream out]
-  find.protocols/IByteArrayOutputStream
+  Bilbo.protocols/IByteArrayOutputStream
   (write-byte*
     [_ int8]
     (.write out ^int int8))
@@ -332,7 +332,7 @@
   (reset*
     [_]
     (.reset out))
-  find.protocols/IToByteArray
+  Bilbo.protocols/IToByteArray
   (to-byte-array*
     [_]
     (.toByteArray out))
@@ -348,7 +348,7 @@
 
 
 (deftype TBitSet [^BitSet bitset]
-  find.protocols/IBitSet
+  Bilbo.protocols/IBitSet
   (get*
     [_ bit-index]
     (.get bitset ^int bit-index))
@@ -361,7 +361,7 @@
   (set*
     [_ bit-index value]
     (.set bitset ^int bit-index ^boolean value))
-  find.protocols/IToByteArray
+  Bilbo.protocols/IToByteArray
   (to-byte-array*
     [_]
     (.toByteArray bitset)))
@@ -492,18 +492,18 @@
   
   (do
     (set! *warn-on-reflection* true)
-    (require '[find.bytes] :reload))
+    (require '[Bilbo.bytes] :reload))
 
   (in-ns 'expanse.bytes.core)
   
   (do
     (in-ns 'expanse.bytes.core)
     (def b (bitset 0))
-    (find.protocols/set* b 3)
-    (println (find.protocols/to-array* b))
+    (Bilbo.protocols/set* b 3)
+    (println (Bilbo.protocols/to-array* b))
 
-    (find.protocols/set* b 10)
-    (println (find.protocols/to-array* b)))
+    (Bilbo.protocols/set* b 10)
+    (println (Bilbo.protocols/to-array* b)))
   
   ;
   )
@@ -558,12 +558,12 @@
   
   (do
     (set! *warn-on-reflection* true)
-    (require '[find.bytes] :reload)
+    (require '[Bilbo.bytes] :reload)
     (require '[expanse.codec.core :as codec.core] :reload))
   
   (->
    (java.security.MessageDigest/getInstance "sha1")
-   (.digest (find.bytes/to-byte-array (clojure.string/join "" (repeat 1000 "aabbccdd"))))
+   (.digest (Bilbo.bytes/to-byte-array (clojure.string/join "" (repeat 1000 "aabbccdd"))))
    (codec.core/hex-to-string))
   ; "49e4076d086a529baf5d5e62f57bacbd9d4dbe81"
   
@@ -604,7 +604,7 @@
 
     (defn foo
       [aset-byte]
-      (let [byte-arr (find.bytes/byte-array 20)]
+      (let [byte-arr (Bilbo.bytes/byte-array 20)]
         (dotimes [i 10000000]
           (aset-byte byte-arr 5 5))))
 
@@ -640,20 +640,20 @@
 (comment
 
   (time
-   (let [ba (find.bytes/byte-array (range 20))]
+   (let [ba (Bilbo.bytes/byte-array (range 20))]
      (dotimes [i 1000000]
-       (-> [(find.bytes/copy-byte-array ba 0 10)
-            (find.bytes/copy-byte-array ba 10 20)]
-           (find.bytes/concat)))))
+       (-> [(Bilbo.bytes/copy-byte-array ba 0 10)
+            (Bilbo.bytes/copy-byte-array ba 10 20)]
+           (Bilbo.bytes/concat)))))
   ; "Elapsed time: 382.270465 msecs"
 
   (time
-   (let [ba (find.bytes/byte-array (range 20))]
+   (let [ba (Bilbo.bytes/byte-array (range 20))]
      (dotimes [i 1000000]
-       (-> [(find.bytes/buffer-wrap ba 0 10)
-            (find.bytes/buffer-wrap ba 10 10)]
-           (find.bytes/concat)
-           (find.bytes/to-byte-array)))))
+       (-> [(Bilbo.bytes/buffer-wrap ba 0 10)
+            (Bilbo.bytes/buffer-wrap ba 10 10)]
+           (Bilbo.bytes/concat)
+           (Bilbo.bytes/to-byte-array)))))
   ; "Elapsed time: 1666.753437 msecs"
 
   ;

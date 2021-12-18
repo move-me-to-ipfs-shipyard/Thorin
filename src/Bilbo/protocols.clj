@@ -1,4 +1,4 @@
-(ns find.protocols)
+(ns Bilbo.protocols)
 
 (defprotocol Close
   (close* [_]))

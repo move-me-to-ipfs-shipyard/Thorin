@@ -1,12 +1,12 @@
-(ns find.db
+(ns Bilbo.db
   (:require
    [clojure.core.async :as a :refer [chan go go-loop <! >! <!! >!!  take! put! offer! poll! alt! alts! close! onto-chan!
                                      pub sub unsub mult tap untap mix admix unmix pipe
                                      timeout to-chan  sliding-buffer dropping-buffer
                                      pipeline pipeline-async]]
    [clojure.java.io :as io]
-   [find.bytes]
-   [find.codec]
+   [Bilbo.bytes]
+   [Bilbo.codec]
    [datahike.api]
    [taoensso.timbre :as log]
    [taoensso.timbre.appenders.3rd-party.rotor]))
@@ -25,9 +25,9 @@
 (comment
 
   (require
-   '[find.db :as find.db]
-   '[find.bytes]
-   '[find.codec]
+   '[Bilbo.db :as Bilbo.db]
+   '[Bilbo.bytes]
+   '[Bilbo.codec]
    '[datahike.api]
    :reload)
 
@@ -98,7 +98,7 @@
        (println :n n))
      (datahike.api/transact conn (map
                                   (fn [i]
-                                    {:infohash (-> (find.bytes/random-bytes 20) (find.codec/hex-to-string))
+                                    {:infohash (-> (Bilbo.bytes/random-bytes 20) (Bilbo.codec/hex-to-string))
                                      :metadata
                                      {:name (str "some torrent name details 12312312 foo bar " n "," i)
                                       :files (map (fn [j]

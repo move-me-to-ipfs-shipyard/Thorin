@@ -1,13 +1,13 @@
-(ns find.bittorrent-sample-infohashes
+(ns Bilbo.bittorrent-sample-infohashes
   (:require
    [clojure.core.async :as a :refer [chan go go-loop <! >!  take! put! offer! poll! alt! alts! close! onto-chan!
                                      pub sub unsub mult tap untap mix admix unmix pipe
                                      timeout to-chan  sliding-buffer dropping-buffer
                                      pipeline pipeline-async]]
    [clojure.core.async.impl.protocols :refer [closed?]]
-   [find.bytes]
-   [find.codec]
-   [find.seed]))
+   [Bilbo.bytes]
+   [Bilbo.codec]
+   [Bilbo.seed]))
 
 (do (set! *warn-on-reflection* true) (set! *unchecked-math* true))
 
@@ -30,7 +30,7 @@
     (go
       (loop [n 4
              i n
-             ts (find.seed/now)
+             ts (Bilbo.seed/now)
              time-total 0]
         (let [timeout| (when (and (== i 0) (< time-total 1000))
                          (timeout (+ time-total (- 1000 time-total))))
@@ -43,18 +43,18 @@
 
               (= port timeout|)
               (do nil
-                  (recur n n (find.seed/now) 0))
+                  (recur n n (Bilbo.seed/now) 0))
 
               (or (= port node-from-sampling|) (= port node-to-sample|))
               (let [[id node] value]
                 (swap! stateA update-in [:routing-table-sampled] assoc id (merge node
-                                                                                 {:timestamp (find.seed/now)}))
+                                                                                 {:timestamp (Bilbo.seed/now)}))
                 (take! (send-krpc-request
-                        {:t (find.bytes/random-bytes 4)
+                        {:t (Bilbo.bytes/random-bytes 4)
                          :y "q"
                          :q "sample_infohashes"
                          :a {:id self-idBA
-                             :target (find.bytes/random-bytes 20)}}
+                             :target (Bilbo.bytes/random-bytes 20)}}
                         node
                         (timeout 2000))
                        (fn [value]
@@ -62,14 +62,14 @@
                            (let [{:keys [msg host port]} value
                                  {:keys [interval nodes num samples]} (:r msg)]
                              (when samples
-                               (doseq [infohashBA (find.seed/decode-samples samples)]
+                               (doseq [infohashBA (Bilbo.seed/decode-samples samples)]
                                  #_(println :info_hash (.toString infohashB "hex"))
                                  (put! infohashes-from-sampling| {:infohashBA infohashBA})))
                              (when interval
                                (swap! stateA update-in [:routing-table-sampled id] merge {:interval interval}))
                              (when nodes
-                               (onto-chan! nodes-from-sampling| (find.seed/decode-nodes nodes) false))))))
-                (recur n (mod (inc i) n) (find.seed/now) (+ time-total (- ts (find.seed/now))))))))))))
+                               (onto-chan! nodes-from-sampling| (Bilbo.seed/decode-nodes nodes) false))))))
+                (recur n (mod (inc i) n) (Bilbo.seed/now) (+ time-total (- ts (Bilbo.seed/now))))))))))))
 
 
 
@@ -89,19 +89,19 @@
     (go
       (loop [n 8
              i n
-             ts (find.seed/now)
+             ts (Bilbo.seed/now)
              time-total 0]
         (when (and (= i 0) (< time-total 2000))
           (a/toggle nodes|mix {nodes-to-sample| {:pause true}})
           (<! (timeout (+ time-total (- 2000 time-total))))
           (a/toggle nodes|mix {nodes-to-sample| {:pause false}})
-          (recur n n (find.seed/now) 0))
+          (recur n n (Bilbo.seed/now) 0))
         (alt!
           nodes|
           ([node]
            (let []
              (swap! stateA update-in [:routing-table-sampled] assoc (:id node) (merge node
-                                                                                      {:timestamp (find.seed/now)}))
+                                                                                      {:timestamp (Bilbo.seed/now)}))
              (let [alternative-infohash-targetB (.randomBytes crypto 20)
                    txn-idB (.randomBytes crypto 4)]
                #_(println :sampling-a-node)
@@ -120,7 +120,7 @@
                    (when samples
                      (let [cancel| (chan 1)
                            _ (swap! cancel-channelsA conj cancel|)
-                           infohashes (find.seed/decode-samples samples)
+                           infohashes (Bilbo.seed/decode-samples samples)
                            _ (doseq [infohashB infohashes]
                                (put! infohash| {:infohashB infohashB
                                                 :rinfo rinfo}))]
@@ -138,7 +138,7 @@
                    #_(when nodes
                        (put! nodes-to-sample| nodes))))))
 
-           (recur n (mod (inc i) n) (find.seed/now) (+ time-total (- ts (find.seed/now)))))
+           (recur n (mod (inc i) n) (Bilbo.seed/now) (+ time-total (- ts (Bilbo.seed/now)))))
 
           stop|
           (do :stop)))

@@ -1,20 +1,20 @@
-(ns find.bencode
+(ns Bilbo.bencode
   (:require
-   [find.protocols]
-   [find.bytes]
-   [find.expanse]))
+   [Bilbo.protocols]
+   [Bilbo.bytes]
+   [Bilbo.expanse]))
 
-(def ^:const colon-byte 58 #_(find.expanse/char-code \:))
-(def ^:const i-byte 105 #_(find.expanse/char-code \i))
-(def ^:const e-byte 101 #_(find.expanse/char-code \e))
-(def ^:const l-byte 108 #_(find.expanse/char-code \l))
-(def ^:const d-byte 100 #_(find.expanse/char-code \d))
+(def ^:const colon-byte 58 #_(Bilbo.expanse/char-code \:))
+(def ^:const i-byte 105 #_(Bilbo.expanse/char-code \i))
+(def ^:const e-byte 101 #_(Bilbo.expanse/char-code \e))
+(def ^:const l-byte 108 #_(Bilbo.expanse/char-code \l))
+(def ^:const d-byte 100 #_(Bilbo.expanse/char-code \d))
 
 (defmulti encode*
   (fn
     ([data out]
      (cond
-       (find.bytes/byte-array? data) :byte-array
+       (Bilbo.bytes/byte-array? data) :byte-array
        (number? data) :number
        (string? data) :string
        (keyword? data) :keyword
@@ -25,52 +25,52 @@
 
 (defmethod encode* :number
   [number out]
-  (find.protocols/write-byte* out i-byte)
-  (find.protocols/write-byte-array* out (find.bytes/to-byte-array (str number)))
-  (find.protocols/write-byte* out e-byte))
+  (Bilbo.protocols/write-byte* out i-byte)
+  (Bilbo.protocols/write-byte-array* out (Bilbo.bytes/to-byte-array (str number)))
+  (Bilbo.protocols/write-byte* out e-byte))
 
 (defmethod encode* :string
   [string out]
-  (encode* (find.bytes/to-byte-array string) out))
+  (encode* (Bilbo.bytes/to-byte-array string) out))
 
 (defmethod encode* :keyword
   [kword out]
-  (encode* (find.bytes/to-byte-array (name kword)) out))
+  (encode* (Bilbo.bytes/to-byte-array (name kword)) out))
 
 (defmethod encode* :sequential
   [coll out]
-  (find.protocols/write-byte* out l-byte)
+  (Bilbo.protocols/write-byte* out l-byte)
   (doseq [item coll]
     (encode* item out))
-  (find.protocols/write-byte* out e-byte))
+  (Bilbo.protocols/write-byte* out e-byte))
 
 (defmethod encode* :map
   [mp out]
-  (find.protocols/write-byte* out d-byte)
+  (Bilbo.protocols/write-byte* out d-byte)
   (doseq [[k v] (into (sorted-map) mp)]
     (encode* k out)
     (encode* v out))
-  (find.protocols/write-byte* out e-byte))
+  (Bilbo.protocols/write-byte* out e-byte))
 
 (defmethod encode* :byte-array
   [byte-arr out]
-  (find.protocols/write-byte-array* out (-> byte-arr (find.bytes/alength) (str) (find.bytes/to-byte-array)))
-  (find.protocols/write-byte* out colon-byte)
-  (find.protocols/write-byte-array* out byte-arr))
+  (Bilbo.protocols/write-byte-array* out (-> byte-arr (Bilbo.bytes/alength) (str) (Bilbo.bytes/to-byte-array)))
+  (Bilbo.protocols/write-byte* out colon-byte)
+  (Bilbo.protocols/write-byte-array* out byte-arr))
 
 (defn encode
   "Takes clojure data, returns byte array"
   [data]
-  (let [out (find.bytes/byte-array-output-stream)]
+  (let [out (Bilbo.bytes/byte-array-output-stream)]
     (encode* data out)
-    (find.protocols/to-byte-array* out)))
+    (Bilbo.protocols/to-byte-array* out)))
 
 (defn peek-next
   [in]
-  (let [byte (find.protocols/read* in)]
+  (let [byte (Bilbo.protocols/read* in)]
     (when (== -1 byte)
       (throw (ex-info (str :decode* " unexpected end of InputStream") {})))
-    (find.protocols/unread* in byte)
+    (Bilbo.protocols/unread* in byte)
     byte))
 
 (defmulti decode*
@@ -88,15 +88,15 @@
   [in
    out
    & args]
-  (find.protocols/read* in) ; skip d char
+  (Bilbo.protocols/read* in) ; skip d char
   (loop [result (transient [])]
     (let [byte (peek-next in)]
       (cond
 
         (== byte e-byte) ; return
         (do
-          (find.protocols/read* in) ; skip e char
-          (find.protocols/reset* out)
+          (Bilbo.protocols/read* in) ; skip e char
+          (Bilbo.protocols/reset* out)
           (apply hash-map (persistent! result)))
 
         (== byte i-byte)
@@ -118,7 +118,7 @@
         (let [byte-arr (decode* in out :byte-array)
               next-element (if (even? (count result))
                              #_its_a_key
-                             (find.bytes/to-string byte-arr)
+                             (Bilbo.bytes/to-string byte-arr)
                              #_its_a_value
                              byte-arr)]
           (recur (conj! result next-element)))))))
@@ -127,15 +127,15 @@
   [in
    out
    & args]
-  (find.protocols/read* in) ; skip l char
+  (Bilbo.protocols/read* in) ; skip l char
   (loop [result (transient [])]
     (let [byte (peek-next in)]
       (cond
 
         (== byte e-byte) ; return
         (do
-          (find.protocols/read* in) ; skip e char
-          (find.protocols/reset* out)
+          (Bilbo.protocols/read* in) ; skip e char
+          (Bilbo.protocols/reset* out)
           (persistent! result))
 
         (== byte i-byte)
@@ -154,26 +154,26 @@
   [in
    out
    & args]
-  (find.protocols/read* in) ; skip i char
+  (Bilbo.protocols/read* in) ; skip i char
   (loop []
-    (let [byte (find.protocols/read* in)]
+    (let [byte (Bilbo.protocols/read* in)]
       (cond
 
         (== byte e-byte)
         (let [number-string (->
-                             (find.protocols/to-byte-array* out)
-                             (find.bytes/to-string))
+                             (Bilbo.protocols/to-byte-array* out)
+                             (Bilbo.bytes/to-string))
               number (try
                        (Integer/parseInt number-string)
                        (catch
                         Exception
                         error
                          (Double/parseDouble number-string)))]
-          (find.protocols/reset* out)
+          (Bilbo.protocols/reset* out)
           number)
 
         :else (do
-                (find.protocols/write-byte* out byte)
+                (Bilbo.protocols/write-byte* out byte)
                 (recur))))))
 
 (defmethod decode* :byte-array
@@ -181,26 +181,26 @@
    out
    & args]
   (loop []
-    (let [byte (find.protocols/read* in)]
+    (let [byte (Bilbo.protocols/read* in)]
       (cond
 
         (== byte colon-byte)
-        (let [length (-> (find.protocols/to-byte-array* out)
-                         (find.bytes/to-string)
+        (let [length (-> (Bilbo.protocols/to-byte-array* out)
+                         (Bilbo.bytes/to-string)
                          (Integer/parseInt))
-              byte-arr (find.protocols/read* in length)]
-          (find.protocols/reset* out)
+              byte-arr (Bilbo.protocols/read* in length)]
+          (Bilbo.protocols/reset* out)
           byte-arr)
 
         :else (do
-                (find.protocols/write-byte* out byte)
+                (Bilbo.protocols/write-byte* out byte)
                 (recur))))))
 
 (defn decode
   "Takes byte array, returns clojure data"
   [byte-arr]
-  (let [in (find.bytes/pushback-input-stream byte-arr)
-        out (find.bytes/byte-array-output-stream)]
+  (let [in (Bilbo.bytes/pushback-input-stream byte-arr)
+        out (Bilbo.bytes/byte-array-output-stream)]
     (decode* in out)))
 
 
@@ -223,38 +223,38 @@
         :install-deps true
         :repl-requires [[cljs.repl :refer-macros [source doc find-doc apropos dir pst]]
                         [cljs.pprint :refer [pprint] :refer-macros [pp]]]} '\
-  --repl-env node --compile find.bencode --repl
+  --repl-env node --compile Bilbo.bencode --repl
 
   (require
-   '[find.bencode]
-   '[find.expanse]
-   '[find.bytes]
-   '[find.codec]
+   '[Bilbo.bencode]
+   '[Bilbo.expanse]
+   '[Bilbo.bytes]
+   '[Bilbo.codec]
    :reload #_:reload-all)
 
   (let [data
         {:t "aabbccdd"
          :a {"id" "197957dab1d2900c5f6d9178656d525e22e63300"}}
-        #_{:t (find.codec/hex-to-bytes "aabbccdd")
-           :a {"id" (find.codec/hex-to-bytes "197957dab1d2900c5f6d9178656d525e22e63300")}}]
+        #_{:t (Bilbo.codec/hex-to-bytes "aabbccdd")
+           :a {"id" (Bilbo.codec/hex-to-bytes "197957dab1d2900c5f6d9178656d525e22e63300")}}]
 
     (->
-     (find.bencode/encode data)
-     #_(find.bytes/to-string)
-     #_(find.bytes/to-byte-array)
-     (find.bencode/decode)
+     (Bilbo.bencode/encode data)
+     #_(Bilbo.bytes/to-string)
+     #_(Bilbo.bytes/to-byte-array)
+     (Bilbo.bencode/decode)
      #_(-> (get-in ["a" "id"]))
-     #_(find.codec/hex-to-string)))
+     #_(Bilbo.codec/hex-to-string)))
 
   (let [data
         {:msg_type 1
          :piece 0
          :total_size 3425}]
     (->
-     (find.bencode/encode data)
-     (find.bytes/to-string)
-     (find.bytes/to-byte-array)
-     (find.bencode/decode)
+     (Bilbo.bencode/encode data)
+     (Bilbo.bytes/to-string)
+     (Bilbo.bytes/to-byte-array)
+     (Bilbo.bencode/decode)
      (clojure.walk/keywordize-keys)))
 
   ;
@@ -271,10 +271,10 @@
    '[clojure.core.async.impl.protocols :refer [closed?]])
 
   (require
-   '[find.bencode]
-   '[find.expanse]
-   '[find.bytes]
-   '[find.codec]
+   '[Bilbo.bencode]
+   '[Bilbo.expanse]
+   '[Bilbo.bytes]
+   '[Bilbo.codec]
    :reload #_:reload-all)
 
   (defn foo
@@ -294,9 +294,9 @@
             (recur)))
         (println :done))))
 
-  (let [data {:t (find.codec/hex-to-bytes "aabbccdd")
-              :a {"id" (find.codec/hex-to-bytes "197957dab1d2900c5f6d9178656d525e22e63300")}}]
-    (foo find.bencode/encode find.bencode/decode data))
+  (let [data {:t (Bilbo.codec/hex-to-bytes "aabbccdd")
+              :a {"id" (Bilbo.codec/hex-to-bytes "197957dab1d2900c5f6d9178656d525e22e63300")}}]
+    (foo Bilbo.bencode/encode Bilbo.bencode/decode data))
 
   ; ~ 50% cpu node
   ; ~ 22% cpu jvm

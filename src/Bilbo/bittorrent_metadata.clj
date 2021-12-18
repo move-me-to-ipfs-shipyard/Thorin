@@ -1,4 +1,4 @@
-(ns find.bittorrent-metadata
+(ns Bilbo.bittorrent-metadata
   (:require
    [clojure.core.async :as a :refer [chan go go-loop <! >!  take! put! offer! poll! alt! alts! close! onto-chan!
                                      pub sub unsub mult tap untap mix admix unmix pipe
@@ -10,13 +10,13 @@
    [clojure.string]
    [clojure.walk]
 
-   [find.bytes]
-   [find.codec]
-   [find.socket]
-   [find.protocols]
-   [find.bencode]
-   [find.ut-metadata]
-   [find.seed]))
+   [Bilbo.bytes]
+   [Bilbo.codec]
+   [Bilbo.socket]
+   [Bilbo.protocols]
+   [Bilbo.bencode]
+   [Bilbo.ut-metadata]
+   [Bilbo.seed]))
 
 (do (set! *warn-on-reflection* true) (set! *unchecked-math* true))
 
@@ -31,7 +31,7 @@
           evt| (chan (sliding-buffer 10))
           msg| (chan 100
                      (map (fn [byte-arr]
-                            (find.bytes/buffer-wrap byte-arr))))
+                            (Bilbo.bytes/buffer-wrap byte-arr))))
 
           send| (chan 100)
 
@@ -41,7 +41,7 @@
 
           socket-ex| (chan 1)
 
-          socket (find.socket/create
+          socket (Bilbo.socket/create
                   {:port port
                    :host host
                    :evt| evt|
@@ -50,14 +50,14 @@
 
           release (fn []
                     (swap! count-socketsA dec)
-                    (find.protocols/close* socket)
+                    (Bilbo.protocols/close* socket)
                     (close! msg|)
                     (close! socket-ex|)
                     (close! send|)
                     (close! evt|)
                     (close! recv|))]
 
-      (find.ut-metadata/create
+      (Bilbo.ut-metadata/create
        {:send| send|
         :recv| recv|
         :metadata| result|
@@ -78,11 +78,11 @@
             send|
             ([value]
              (when value
-               (find.protocols/send* socket value)
+               (Bilbo.protocols/send* socket value)
                (recur)))
             :priority true)))
       (swap! count-socketsA inc)
-      (find.protocols/connect* socket)
+      (Bilbo.protocols/connect* socket)
 
       (go
         (loop []
@@ -121,14 +121,14 @@
         result|
         ([metadataBA]
          (let [metadata (->
-                         (find.bencode/decode metadataBA)
+                         (Bilbo.bencode/decode metadataBA)
                          (clojure.walk/keywordize-keys)
                          (select-keys [:name :files :name.utf-8 :length])
                          (->> (clojure.walk/postwalk
                                (fn [form]
                                  (cond
-                                   (find.bytes/byte-array? form)
-                                   (find.bytes/to-string form)
+                                   (Bilbo.bytes/byte-array? form)
+                                   (Bilbo.bytes/to-string form)
 
                                    :else form)))))]
            (release)
@@ -153,12 +153,12 @@
                            (not (get @unique-seedersA seeder)))
 
           seeders| (chan (sliding-buffer 256))
-          nodes| (chan (find.seed/sorted-map-buffer 1024 (find.seed/hash-key-distance-comparator-fn infohashBA)))
+          nodes| (chan (Bilbo.seed/sorted-map-buffer 1024 (Bilbo.seed/hash-key-distance-comparator-fn infohashBA)))
           nodes-seeders| (chan (sliding-buffer 256))
           seeder| (chan 1)
 
 
-          routing-table-nodes| (chan (find.seed/sorted-map-buffer 128 (find.seed/hash-key-distance-comparator-fn infohashBA)
+          routing-table-nodes| (chan (Bilbo.seed/sorted-map-buffer 128 (Bilbo.seed/hash-key-distance-comparator-fn infohashBA)
                                                         #_(fn [id1 id2]
                                                             (distance-compare
                                                              (xor-distance infohashB (js/Buffer.from id1 "hex"))
@@ -171,13 +171,13 @@
                                                                        (xor-distance infohashB (:idB node1))
                                                                        (xor-distance infohashB (:idB node2)))))))
 
-          _ (<! (onto-chan! routing-table-nodes| (sort-by first (find.seed/hash-key-distance-comparator-fn infohashBA) routing-table) false))
+          _ (<! (onto-chan! routing-table-nodes| (sort-by first (Bilbo.seed/hash-key-distance-comparator-fn infohashBA) routing-table) false))
 
           send-get-peers (fn [node]
                            (go
                              (alt!
                                (send-krpc-request
-                                {:t (find.bytes/random-bytes 4)
+                                {:t (Bilbo.bytes/random-bytes 4)
                                  :y "q"
                                  :q "get_peers"
                                  :a {:id self-idBA
@@ -199,7 +199,7 @@
                                            (when metadata
                                              (let [result (merge
                                                            metadata
-                                                           {:infohash (find.codec/hex-to-string infohashBA)
+                                                           {:infohash (Bilbo.codec/hex-to-string infohashBA)
                                                             :seeder-count @seeders-countA})]
                                                (put! result| result)
                                                (put! out| result)))
@@ -217,7 +217,7 @@
       (go
         (loop [n 8
                i n
-               ts (find.seed/now)
+               ts (Bilbo.seed/now)
                time-total 0]
           (let [timeout| (when (and (== i 0) (< time-total 1000))
                            (timeout 1000))
@@ -242,7 +242,7 @@
                 (= port timeout|)
                 (do
                   :cool-down
-                  (recur n n (find.seed/now) 0))
+                  (recur n n (Bilbo.seed/now) 0))
 
                 (or (= port nodes|) (= port routing-table-nodes|) (= port nodes-seeders|))
                 (let [[id node] value]
@@ -251,7 +251,7 @@
                            (cond
                              values
                              (let [seeders (->>
-                                            (find.seed/decode-values values)
+                                            (Bilbo.seed/decode-values values)
                                             (sequence
                                              (comp
                                               (filter valid-ip?)
@@ -262,10 +262,10 @@
 
                              nodes
                              (let [nodes (->>
-                                          (find.seed/decode-nodes nodes)
+                                          (Bilbo.seed/decode-nodes nodes)
                                           (filter valid-ip?))]
                                (onto-chan! nodes| (map (fn [node] [(:id node) node]) nodes) false)))))
-                  (recur n (mod (inc i) n) (find.seed/now) (+ time-total (- (find.seed/now) ts)))))))))
+                  (recur n (mod (inc i) n) (Bilbo.seed/now) (+ time-total (- (Bilbo.seed/now) ts)))))))))
 
       (go
         (loop [n 8
@@ -323,7 +323,7 @@
                     closest-key (->>
                                  (keys (:dht-keyspace state))
                                  (concat [self-id])
-                                 (sort-by identity (find.seed/hash-key-distance-comparator-fn infohashBA))
+                                 (sort-by identity (Bilbo.seed/hash-key-distance-comparator-fn infohashBA))
                                  (first))
                     closest-routing-table (if (= closest-key self-id)
                                             (:routing-table state)

@@ -1,13 +1,13 @@
-(ns find.ut-metadata
+(ns Bilbo.ut-metadata
   (:require
    [clojure.core.async :as a :refer [chan go go-loop <! >!  take! put! offer! poll! alt! alts! close! onto-chan!
                                      pub sub unsub mult tap untap mix admix unmix pipe
                                      timeout to-chan  sliding-buffer dropping-buffer
                                      pipeline pipeline-async]]
    [clojure.string]
-   [find.bytes]
-   [find.codec]
-   [find.bencode]
+   [Bilbo.bytes]
+   [Bilbo.codec]
+   [Bilbo.bencode]
    [clojure.walk :refer [keywordize-keys]]))
 
 (do (set! *warn-on-reflection* true) (set! *unchecked-math* true))
@@ -36,23 +36,23 @@
                                   (->
                                    @buffersV
                                    (persistent!)
-                                   (find.bytes/concat)))]
+                                   (Bilbo.bytes/concat)))]
                     (vreset! buffersV (transient []))
                     (vreset! total-sizeV 0)
                     resultB)
 
                   (> total-size expected-size)
-                  (let [overB (find.bytes/concat (persistent! @buffersV))
-                        resultB (find.bytes/buffer-wrap overB 0 expected-size)
-                        leftoverB (find.bytes/buffer-wrap overB expected-size (- total-size expected-size))]
+                  (let [overB (Bilbo.bytes/concat (persistent! @buffersV))
+                        resultB (Bilbo.bytes/buffer-wrap overB 0 expected-size)
+                        leftoverB (Bilbo.bytes/buffer-wrap overB expected-size (- total-size expected-size))]
                     (vreset! buffersV (transient [leftoverB]))
-                    (vreset! total-sizeV (find.bytes/capacity leftoverB))
+                    (vreset! total-sizeV (Bilbo.bytes/capacity leftoverB))
                     resultB)
 
                   :else
                   (when-let [recvB (<! recv|)]
                     (vswap! buffersV conj! recvB)
-                    (vreset! total-sizeV (+ total-size (find.bytes/capacity recvB)))
+                    (vreset! total-sizeV (+ total-size (Bilbo.bytes/capacity recvB)))
                     (recur))))))))))
 
 (defn buffer-cut
@@ -74,32 +74,32 @@
                           (->
                            buffersT
                            (persistent!)
-                           (find.bytes/concat)))]
+                           (Bilbo.bytes/concat)))]
             (>! to| resultBB)
             (recur (transient []) 0 (<! expected-size|)))
 
           (> total-size expected-size)
-          (let [overBB (find.bytes/concat (persistent! buffersT))
-                resultBB (find.bytes/buffer-slice overBB 0 expected-size)
-                leftoverBB (find.bytes/buffer-slice overBB expected-size (- total-size expected-size))]
+          (let [overBB (Bilbo.bytes/concat (persistent! buffersT))
+                resultBB (Bilbo.bytes/buffer-slice overBB 0 expected-size)
+                leftoverBB (Bilbo.bytes/buffer-slice overBB expected-size (- total-size expected-size))]
             (>! to| resultBB)
-            (recur (transient [leftoverBB]) (find.bytes/capacity leftoverBB) (<! expected-size|)))
+            (recur (transient [leftoverBB]) (Bilbo.bytes/capacity leftoverBB) (<! expected-size|)))
 
           :else
           (when-let [recvBB (<! from|)]
-            (recur (conj! buffersT recvBB) (+ total-size (find.bytes/capacity recvBB)) expected-size)))))
+            (recur (conj! buffersT recvBB) (+ total-size (Bilbo.bytes/capacity recvBB)) expected-size)))))
     (close! to|)))
 
-(def pstrlenBA (find.bytes/byte-array [19]))
-(def pstrBA (find.bytes/to-byte-array "BitTorrent protocol" #_"\u0013BitTorrent protocol"))
-(def reservedBA (find.bytes/byte-array [0 0 0 0 0 2r00010000 0 2r00000001]))
-(def keep-aliveBA (find.bytes/byte-array [0 0 0 0]))
-(def chokeBA (find.bytes/byte-array [0 0 0 1 0]))
-(def unchokeBA (find.bytes/byte-array [0 0 0 1 1]))
-(def interestedBA (find.bytes/byte-array [0 0 0 1 2]))
-(def not-interestedBA (find.bytes/byte-array [0 0 0 1 3]))
-(def haveBA (find.bytes/byte-array [0 0 0 5 4]))
-(def portBA (find.bytes/byte-array [0 0 0 3 9 0 0]))
+(def pstrlenBA (Bilbo.bytes/byte-array [19]))
+(def pstrBA (Bilbo.bytes/to-byte-array "BitTorrent protocol" #_"\u0013BitTorrent protocol"))
+(def reservedBA (Bilbo.bytes/byte-array [0 0 0 0 0 2r00010000 0 2r00000001]))
+(def keep-aliveBA (Bilbo.bytes/byte-array [0 0 0 0]))
+(def chokeBA (Bilbo.bytes/byte-array [0 0 0 1 0]))
+(def unchokeBA (Bilbo.bytes/byte-array [0 0 0 1 1]))
+(def interestedBA (Bilbo.bytes/byte-array [0 0 0 1 2]))
+(def not-interestedBA (Bilbo.bytes/byte-array [0 0 0 1 3]))
+(def haveBA (Bilbo.bytes/byte-array [0 0 0 5 4]))
+(def portBA (Bilbo.bytes/byte-array [0 0 0 3 9 0 0]))
 
 (def ^:const ut-metadata-block-size 16384)
 (def ^:const ut-metadata-max-size 1000000)
@@ -108,19 +108,19 @@
   [ext-msg-id data]
   (let [payloadBA (->
                    data
-                   (find.bencode/encode))
-        msg-lengthBB (find.bytes/buffer-allocate 4)
-        msg-length (+ 2 (find.bytes/alength payloadBA))]
-    (find.bytes/put-uint32 msg-lengthBB 0 msg-length)
+                   (Bilbo.bencode/encode))
+        msg-lengthBB (Bilbo.bytes/buffer-allocate 4)
+        msg-length (+ 2 (Bilbo.bytes/alength payloadBA))]
+    (Bilbo.bytes/put-uint32 msg-lengthBB 0 msg-length)
     (->
-     (find.bytes/concat
-      [(find.bytes/to-byte-array msg-lengthBB)
-       (find.bytes/byte-array [20 ext-msg-id])
+     (Bilbo.bytes/concat
+      [(Bilbo.bytes/to-byte-array msg-lengthBB)
+       (Bilbo.bytes/byte-array [20 ext-msg-id])
        payloadBA]))))
 
 (defn handshake-msg
   [infohashBA peer-idBA]
-  (find.bytes/concat [pstrlenBA pstrBA reservedBA infohashBA peer-idBA]))
+  (Bilbo.bytes/concat [pstrlenBA pstrBA reservedBA infohashBA peer-idBA]))
 
 (defn create
   [{:as opts
@@ -188,7 +188,7 @@
             (condp = (:op stateT)
 
               :pstrlen
-              (let [pstrlen (find.bytes/get-uint8 msgBB 0)]
+              (let [pstrlen (Bilbo.bytes/get-uint8 msgBB 0)]
                 (recur (-> stateT
                            (assoc! :op :handshake)
                            (assoc! :pstrlen pstrlen)
@@ -196,24 +196,24 @@
 
               :handshake
               (let [{:keys [pstrlen]} stateT
-                    pstr (-> (find.bytes/buffer-slice msgBB 0 pstrlen) (find.bytes/to-string))]
+                    pstr (-> (Bilbo.bytes/buffer-slice msgBB 0 pstrlen) (Bilbo.bytes/to-string))]
                 (if-not (= pstr "BitTorrent protocol")
                   (throw (ex-info "Peer's protocol is not 'BitTorrent protocol'"  {:pstr pstr} nil))
-                  (let [reservedBB (find.bytes/buffer-slice msgBB pstrlen 8)
-                        infohashBB (find.bytes/buffer-slice msgBB (+ pstrlen 8) 20)
-                        peer-idBB (find.bytes/buffer-slice msgBB (+ pstrlen 28) 20)]
+                  (let [reservedBB (Bilbo.bytes/buffer-slice msgBB pstrlen 8)
+                        infohashBB (Bilbo.bytes/buffer-slice msgBB (+ pstrlen 8) 20)
+                        peer-idBB (Bilbo.bytes/buffer-slice msgBB (+ pstrlen 28) 20)]
                     #_(println :received-handshake)
                     (>! send| (extended-msg 0 {:m (:extensions stateT)
                                                #_:metadata_size #_1000}))
                     (recur (-> stateT
                                (assoc! :op :msg-length)
                                (assoc! :expected-size 4)
-                               (assoc! :peer-infohashBA (find.bytes/to-byte-array infohashBB))
-                               (assoc! :peer-extended? (not (== 0 (bit-and (find.bytes/get-uint8 reservedBB 5) 2r00010000))) )
-                               (assoc! :peer-dht? (not (== 0 (bit-and (find.bytes/get-uint8 reservedBB 7) 2r00000001)))))))))
+                               (assoc! :peer-infohashBA (Bilbo.bytes/to-byte-array infohashBB))
+                               (assoc! :peer-extended? (not (== 0 (bit-and (Bilbo.bytes/get-uint8 reservedBB 5) 2r00010000))) )
+                               (assoc! :peer-dht? (not (== 0 (bit-and (Bilbo.bytes/get-uint8 reservedBB 7) 2r00000001)))))))))
 
               :msg-length
-              (let [msg-length (find.bytes/get-uint32 msgBB 0)]
+              (let [msg-length (Bilbo.bytes/get-uint32 msgBB 0)]
                 (if (== 0 msg-length) #_:keep-alive
                     (do
                       (recur stateT))
@@ -227,7 +227,7 @@
                                (assoc! :op :msg-length)
                                (assoc! :expected-size 4))
                     {:keys [msg-length]} stateT
-                    msg-id (find.bytes/get-uint8 msgBB 0)]
+                    msg-id (Bilbo.bytes/get-uint8 msgBB 0)]
 
                 (cond
 
@@ -253,7 +253,7 @@
 
                   #_:have
                   (and (== msg-id 4) (== msg-length 5))
-                  (let [piece-index (find.bytes/get-uint32 msgBB 1)]
+                  (let [piece-index (Bilbo.bytes/get-uint32 msgBB 1)]
                     (recur stateT))
 
                   #_:bitfield
@@ -262,16 +262,16 @@
 
                   #_:request
                   (and (== msg-id 6) (== msg-length 13))
-                  (let [index (find.bytes/get-uint32 msgBB 1)
-                        begin (find.bytes/get-uint32 msgBB 5)
-                        length (find.bytes/get-uint32 msgBB 9)]
+                  (let [index (Bilbo.bytes/get-uint32 msgBB 1)
+                        begin (Bilbo.bytes/get-uint32 msgBB 5)
+                        length (Bilbo.bytes/get-uint32 msgBB 9)]
                     (recur stateT))
 
                   #_:piece
                   (== msg-id 7)
-                  (let [index (find.bytes/get-uint32 msgBB 1)
-                        begin (find.bytes/get-uint32 msgBB 5)
-                        blockBB (find.bytes/buffer-slice msgBB 9 (- msg-length 9))]
+                  (let [index (Bilbo.bytes/get-uint32 msgBB 1)
+                        begin (Bilbo.bytes/get-uint32 msgBB 5)
+                        blockBB (Bilbo.bytes/buffer-slice msgBB 9 (- msg-length 9))]
                     (recur stateT))
 
                   #_:cancel
@@ -284,13 +284,13 @@
 
                   #_:extended
                   (and (== msg-id 20))
-                  (let [ext-msg-id (find.bytes/get-uint8 msgBB 1)
-                        payloadBB (find.bytes/buffer-slice msgBB 2 (- msg-length 2))]
+                  (let [ext-msg-id (Bilbo.bytes/get-uint8 msgBB 1)
+                        payloadBB (Bilbo.bytes/buffer-slice msgBB 2 (- msg-length 2))]
                     (cond
 
                       #_:handshake
                       (== ext-msg-id 0)
-                      (let [data (-> (find.bytes/to-byte-array payloadBB) (find.bencode/decode) (keywordize-keys))]
+                      (let [data (-> (Bilbo.bytes/to-byte-array payloadBB) (Bilbo.bencode/decode) (keywordize-keys))]
                         (let  [ut-metadata-id (get-in data [:m :ut_metadata])
                                metadata_size (get data :metadata_size)]
                           #_(println :received-extened-handshake (:m data) metadata_size)
@@ -315,10 +315,10 @@
                                    (assoc! :ut-metadata-max-rejects 2 #_(-> (/ metadata_size ut-metadata-block-size) (int) (+ 1))))))
 
                       (== ext-msg-id 3 #_(get-in stateT [:extensions "ut-metadata"]) #_(get-in stateT [:peer-extended-data "m" "ut_metadata"]))
-                      (let [payload-str (find.bytes/to-string payloadBB)
+                      (let [payload-str (Bilbo.bytes/to-string payloadBB)
                             block-index (-> (clojure.string/index-of payload-str "ee") (+ 2))
                             data-str (subs payload-str 0 block-index)
-                            data  (-> data-str (find.bytes/to-byte-array) (find.bencode/decode) (keywordize-keys))]
+                            data  (-> data-str (Bilbo.bytes/to-byte-array) (Bilbo.bencode/decode) (keywordize-keys))]
                         #_(println :ext-msg-id-3 data)
                         (condp == (:msg_type data)
 
@@ -334,16 +334,16 @@
                           #_:data
                           1
                           (let [blockBA (-> payloadBB
-                                            (find.bytes/buffer-slice block-index (- (find.bytes/capacity payloadBB) block-index))
-                                            (find.bytes/to-byte-array))  #_(-> payload-str (subs block-index) (find.bytes/to-byte-array))
+                                            (Bilbo.bytes/buffer-slice block-index (- (Bilbo.bytes/capacity payloadBB) block-index))
+                                            (Bilbo.bytes/to-byte-array))  #_(-> payload-str (subs block-index) (Bilbo.bytes/to-byte-array))
                                 ut-metadata-size (get-in stateT [:peer-extended-data :metadata_size])
-                                downloaded (+ (:ut-metadata-downloaded stateT) (find.bytes/alength blockBA))]
-                            #_(println :got-piece data downloaded (find.bytes/alength blockBA))
+                                downloaded (+ (:ut-metadata-downloaded stateT) (Bilbo.bytes/alength blockBA))]
+                            #_(println :got-piece data downloaded (Bilbo.bytes/alength blockBA))
                             (cond
                               (== downloaded ut-metadata-size)
-                              (let [metadataBA (find.bytes/concat (persistent! (conj! (:ut-metadata-pieces stateT) blockBA)))
-                                    metadata-hash (-> (find.bytes/sha1 metadataBA) (find.codec/hex-to-string))
-                                    peer-infohash (-> (:peer-infohashBA stateT) (find.codec/hex-to-string))]
+                              (let [metadataBA (Bilbo.bytes/concat (persistent! (conj! (:ut-metadata-pieces stateT) blockBA)))
+                                    metadata-hash (-> (Bilbo.bytes/sha1 metadataBA) (Bilbo.codec/hex-to-string))
+                                    peer-infohash (-> (:peer-infohashBA stateT) (Bilbo.codec/hex-to-string))]
                                 (if-not (= metadata-hash peer-infohash)
                                   (throw (ex-info "metadata hash differs from peer's infohash" {} nil))
                                   (>! metadata| metadataBA))
@@ -431,8 +431,8 @@
                                       pub sub unsub mult tap untap mix admix unmix pipe
                                       timeout to-chan  sliding-buffer dropping-buffer
                                       pipeline pipeline-async]]
-   '[find.bytes]
-   '[find.bencode]
+   '[Bilbo.bytes]
+   '[Bilbo.bencode]
    '[expanse.bittorrent.wire-protocol.core :as wire-protocol.core]
    :reload #_:reload-all)
   
@@ -443,8 +443,8 @@
 (comment
 
 
-  (find.bytes/get-uint32 (find.bytes/buffer-wrap (find.bytes/byte-array [0 0 0 5])) 0)
-  (find.bytes/get-uint32 (find.bytes/buffer-wrap (find.bytes/byte-array [0 0 1 3])) 0)
+  (Bilbo.bytes/get-uint32 (Bilbo.bytes/buffer-wrap (Bilbo.bytes/byte-array [0 0 0 5])) 0)
+  (Bilbo.bytes/get-uint32 (Bilbo.bytes/buffer-wrap (Bilbo.bytes/byte-array [0 0 1 3])) 0)
 
 
   ; The bit selected for the extension protocol is bit 20 from the right (counting starts at 0) . 
@@ -453,17 +453,17 @@
   ; => 16
 
   (->
-   (find.bytes/buffer-allocate 4)
-   (find.bytes/put-int 0 16384)
-   (find.bytes/get-int 0))
+   (Bilbo.bytes/buffer-allocate 4)
+   (Bilbo.bytes/put-int 0 16384)
+   (Bilbo.bytes/get-int 0))
 
-  (let [byte-buf  (find.bytes/buffer-allocate 4)
-        _ (find.bytes/put-int byte-buf 0 16384)
-        byte-arr (find.bytes/to-byte-array byte-buf)]
-    [(find.bytes/alength byte-arr)
+  (let [byte-buf  (Bilbo.bytes/buffer-allocate 4)
+        _ (Bilbo.bytes/put-int byte-buf 0 16384)
+        byte-arr (Bilbo.bytes/to-byte-array byte-buf)]
+    [(Bilbo.bytes/alength byte-arr)
      (-> byte-arr
-         (find.bytes/buffer-wrap)
-         (find.bytes/get-uint32 0))])
+         (Bilbo.bytes/buffer-wrap)
+         (Bilbo.bytes/get-uint32 0))])
 
 
   ;

@@ -1,8 +1,8 @@
-(ns find.fs
+(ns Bilbo.fs
   (:refer-clojure :exclude [remove])
   (:require
    [clojure.java.io :as io]
-   [find.protocols])
+   [Bilbo.protocols])
   (:import (java.io Writer File)))
 
 (do (set! *warn-on-reflection* true) (set! *unchecked-math* true))
@@ -29,11 +29,11 @@
   (io/make-parents filepath))
 
 (deftype TWriter [^Writer io-writer]
-  find.protocols/PWriter
+  Bilbo.protocols/PWriter
   (write-string*
     [_ string]
     (.write io-writer ^String string))
-  find.protocols/Close
+  Bilbo.protocols/Close
   (close*
     [_]
     (.close io-writer)))

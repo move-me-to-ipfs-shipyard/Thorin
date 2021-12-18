@@ -1,9 +1,9 @@
-(ns find.transit
+(ns Bilbo.transit
   (:refer-clojure :exclude [read-string])
   (:require
    [clojure.string]
    [cognitect.transit :as transit]
-   [find.bytes])
+   [Bilbo.bytes])
   (:import (java.io ByteArrayOutputStream ByteArrayInputStream)))
 
 (do (set! *warn-on-reflection* true) (set! *unchecked-math* true))
@@ -19,7 +19,7 @@
   [data type-kw opts]
   (->
    (write-to-byte-array data type-kw opts)
-   (find.bytes/to-string)))
+   (Bilbo.bytes/to-string)))
 
 (defn read-byte-array
   [^bytes byte-arr type-kw opts]
@@ -30,7 +30,7 @@
 (defn read-string
   [^String string type-kw opts]
   (->
-   (find.bytes/to-byte-array string)
+   (Bilbo.bytes/to-byte-array string)
    (read-byte-array type-kw opts)))
 
 (comment
@@ -56,7 +56,7 @@
                                                 timeout to-chan  sliding-buffer dropping-buffer
                                                 pipeline pipeline-async]])
     
-    (require '[find.bytes] :reload)
+    (require '[Bilbo.bytes] :reload)
     (require '[expanse.transit.core :as transit.core] :reload))
   
   
@@ -91,7 +91,7 @@
          [t data]
          (->
           (write-byte-array* t data)
-          (find.bytes/to-string))))
+          (Bilbo.bytes/to-string))))
 
      (defn writer
        ([type-kw]
@@ -118,7 +118,7 @@
          [t data]
          (->
           (write-string* t data)
-          (find.bytes/to-byte-array)))
+          (Bilbo.bytes/to-byte-array)))
        (write-string*
          [_ data]
          (transit/write writer data)))

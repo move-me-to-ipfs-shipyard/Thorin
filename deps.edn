@@ -9,10 +9,11 @@
         io.replikativ/datahike {:mvn/version "0.3.6"}}
 
  :aliases
- {:repl
-  {:extra-deps {deps-repl/deps-repl {:git/url "https://github.com/empire-strikes-back/deps-repl"
-                                     :sha "8904c39e136aacafc70c3e066856fc87bcdec127"}}}
+ {:repl {:extra-deps {Ripley/Ripley {:git/url "https://github.com/Empire-Strikes-Back/Ripley"
+                                     :sha "becd2573ab55d42933134d346bc46cdd8fa08c04"}}}
 
-  :uberjar
-  {:extra-deps {genie/genie {:git/url "https://github.com/empire-strikes-back/genie"
-                             :sha "8dc55bff334f866290383293a7f82b18181bcae2"}}}}}
+  :uberjar {:extra-deps {Genie/Genie {:git/url "https://github.com/Empire-Strikes-Back/Genie"
+                                      :sha "fe9200d223e3a5c79e88dfa17bc2697c09dae70e"}}}
+
+  :identicon {:extra-deps {Zazu/Zazu {:git/url "https://github.com/Empire-Strikes-Back/Zazu"
+                                      :sha "063ef7649c01284be8f5a1e9814d5bf83025ad76"}}}}}

@@ -1,4 +1,4 @@
-(ns find.seed
+(ns Bilbo.seed
   (:require
    [clojure.core.async :as a :refer [chan go go-loop <! >!  take! put! offer! poll! alt! alts! close! onto-chan!
                                      pub sub unsub mult tap untap mix admix unmix pipe
@@ -7,10 +7,10 @@
    [clojure.core.async.impl.protocols :refer [closed?]]
    [clojure.java.io :as io]
 
-   [find.bytes]
-   [find.codec]
-   [find.fs]
-   [find.transit]
+   [Bilbo.bytes]
+   [Bilbo.codec]
+   [Bilbo.fs]
+   [Bilbo.transit]
    [cognitect.transit :as transit]))
 
 (do (set! *warn-on-reflection* true) (set! *unchecked-math* true))
@@ -22,9 +22,9 @@
 (defn gen-neighbor-id
   [target-idBA node-idBA]
   (->>
-   [(find.bytes/copy-byte-array target-idBA 0 10)
-    (find.bytes/copy-byte-array node-idBA 10 (find.bytes/alength node-idBA))]
-   (find.bytes/concat)))
+   [(Bilbo.bytes/copy-byte-array target-idBA 0 10)
+    (Bilbo.bytes/copy-byte-array node-idBA 10 (Bilbo.bytes/alength node-idBA))]
+   (Bilbo.bytes/concat)))
 
 (defn encode-nodes
   [nodes]
@@ -35,28 +35,28 @@
                 (->>
                  (clojure.string/split (:host node) #"\.")
                  (map #(Integer/parseInt %))
-                 (find.bytes/byte-array))
+                 (Bilbo.bytes/byte-array))
                 (->
                  (doto
-                  (find.bytes/buffer-allocate 2)
-                   (find.bytes/put-uint16 0 (:port node)))
-                 (find.bytes/to-byte-array))]
-               (find.bytes/concat))))
-       (find.bytes/concat)))
+                  (Bilbo.bytes/buffer-allocate 2)
+                   (Bilbo.bytes/put-uint16 0 (:port node)))
+                 (Bilbo.bytes/to-byte-array))]
+               (Bilbo.bytes/concat))))
+       (Bilbo.bytes/concat)))
 
 (defn decode-nodes
   [nodesBA]
   (try
-    (let [nodesBB (find.bytes/buffer-wrap nodesBA)]
-      (for [i (range 0 (find.bytes/alength nodesBA) 26)]
-        (let [idBA (find.bytes/copy-byte-array nodesBA i (unchecked-add i 20))]
-          {:id (find.codec/hex-to-string idBA)
+    (let [nodesBB (Bilbo.bytes/buffer-wrap nodesBA)]
+      (for [i (range 0 (Bilbo.bytes/alength nodesBA) 26)]
+        (let [idBA (Bilbo.bytes/copy-byte-array nodesBA i (unchecked-add i 20))]
+          {:id (Bilbo.codec/hex-to-string idBA)
            :idBA idBA
-           :host (str (find.bytes/get-uint8 nodesBB (unchecked-add i 20)) "."
-                      (find.bytes/get-uint8 nodesBB (unchecked-add i 21)) "."
-                      (find.bytes/get-uint8 nodesBB (unchecked-add i 22)) "."
-                      (find.bytes/get-uint8 nodesBB (unchecked-add i 23)))
-           :port (find.bytes/get-uint16 nodesBB (unchecked-add i 24))})))
+           :host (str (Bilbo.bytes/get-uint8 nodesBB (unchecked-add i 20)) "."
+                      (Bilbo.bytes/get-uint8 nodesBB (unchecked-add i 21)) "."
+                      (Bilbo.bytes/get-uint8 nodesBB (unchecked-add i 22)) "."
+                      (Bilbo.bytes/get-uint8 nodesBB (unchecked-add i 23)))
+           :port (Bilbo.bytes/get-uint16 nodesBB (unchecked-add i 24))})))
     (catch Exception ex nil)))
 
 
@@ -66,40 +66,40 @@
    (flatten [values])
    (sequence
     (comp
-     (filter (fn [x] (find.bytes/byte-array? x)))
+     (filter (fn [x] (Bilbo.bytes/byte-array? x)))
      (map
       (fn [peer-infoBA]
-        (let [peer-infoBB (find.bytes/buffer-wrap  peer-infoBA)]
-          {:host (str (find.bytes/get-uint8 peer-infoBB 0) "."
-                      (find.bytes/get-uint8 peer-infoBB 1) "."
-                      (find.bytes/get-uint8 peer-infoBB 2) "."
-                      (find.bytes/get-uint8 peer-infoBB 3))
-           :port (find.bytes/get-uint16 peer-infoBB 4)})))))))
+        (let [peer-infoBB (Bilbo.bytes/buffer-wrap  peer-infoBA)]
+          {:host (str (Bilbo.bytes/get-uint8 peer-infoBB 0) "."
+                      (Bilbo.bytes/get-uint8 peer-infoBB 1) "."
+                      (Bilbo.bytes/get-uint8 peer-infoBB 2) "."
+                      (Bilbo.bytes/get-uint8 peer-infoBB 3))
+           :port (Bilbo.bytes/get-uint16 peer-infoBB 4)})))))))
 
 (defn decode-samples
   [samplesBA]
-  (for [i (range 0 (find.bytes/alength samplesBA) 20)]
-    (find.bytes/copy-byte-array samplesBA i (unchecked-add i 20))))
+  (for [i (range 0 (Bilbo.bytes/alength samplesBA) 20)]
+    (Bilbo.bytes/copy-byte-array samplesBA i (unchecked-add i 20))))
 
 (defn xor-distance
   [xBA yBA]
-  (let [xBA-length (find.bytes/alength xBA)]
-    (when-not (== xBA-length (find.bytes/alength yBA))
+  (let [xBA-length (Bilbo.bytes/alength xBA)]
+    (when-not (== xBA-length (Bilbo.bytes/alength yBA))
       (throw (ex-info "xor-distance: args should have same length" {})))
-    (let [resultBB (find.bytes/buffer-allocate xBA-length)]
+    (let [resultBB (Bilbo.bytes/buffer-allocate xBA-length)]
       (dotimes [i xBA-length]
-        (find.bytes/put-uint8 resultBB i (bit-xor (find.bytes/aget-byte xBA i) (find.bytes/aget-byte yBA i))))
-      (find.bytes/to-byte-array resultBB))))
+        (Bilbo.bytes/put-uint8 resultBB i (bit-xor (Bilbo.bytes/aget-byte xBA i) (Bilbo.bytes/aget-byte yBA i))))
+      (Bilbo.bytes/to-byte-array resultBB))))
 
 (defn distance-compare
   [distance1BA distance2BA]
-  (let [distance1BA-length (find.bytes/alength distance1BA)]
-    (when-not (== distance1BA-length (find.bytes/alength distance2BA))
+  (let [distance1BA-length (Bilbo.bytes/alength distance1BA)]
+    (when-not (== distance1BA-length (Bilbo.bytes/alength distance2BA))
       (throw (ex-info "distance-compare: buffers should have same length" {})))
     (reduce
      (fn [result i]
-       (let [a (find.bytes/aget-byte distance1BA i)
-             b (find.bytes/aget-byte distance2BA i)]
+       (let [a (Bilbo.bytes/aget-byte distance1BA i)
+             b (Bilbo.bytes/aget-byte distance2BA i)]
          (cond
            (== a b) 0
            (< a b) (reduced -1)
@@ -111,8 +111,8 @@
   [targetBA]
   (fn [id1 id2]
     (distance-compare
-     (xor-distance targetBA (find.codec/hex-to-bytes id1))
-     (xor-distance targetBA (find.codec/hex-to-bytes id2)))))
+     (xor-distance targetBA (Bilbo.codec/hex-to-bytes id1))
+     (xor-distance targetBA (Bilbo.codec/hex-to-bytes id2)))))
 
 (defn sorted-map-buffer
   "sliding according to comparator sorted-map buffer"
@@ -137,33 +137,33 @@
 
 
 (def transit-write
-  (let [handlers {find.bytes/ByteArray
+  (let [handlers {Bilbo.bytes/ByteArray
                   (transit/write-handler
-                   (fn [byte-arr] "::find.bytes/byte-array")
-                   (fn [byte-arr] (find.codec/hex-to-string byte-arr)))
+                   (fn [byte-arr] "::Bilbo.bytes/byte-array")
+                   (fn [byte-arr] (Bilbo.codec/hex-to-string byte-arr)))
                   clojure.core.async.impl.channels.ManyToManyChannel
                   (transit/write-handler
                    (fn [c|] "ManyToManyChannel")
                    (fn [c|] nil))}]
     (fn [data]
-      (find.transit/write-to-string data :json-verbose {:handlers handlers}))))
+      (Bilbo.transit/write-to-string data :json-verbose {:handlers handlers}))))
 
 (def transit-read
-  (let [handlers {"::find.bytes/byte-array"
+  (let [handlers {"::Bilbo.bytes/byte-array"
                   (transit/read-handler
-                   (fn [string] (find.codec/hex-to-bytes string)))
+                   (fn [string] (Bilbo.codec/hex-to-bytes string)))
                   "ManyToManyChannel"
                   (transit/read-handler
                    (fn [string] nil))}]
     (fn [data-string]
-      (find.transit/read-string data-string :json-verbose {:handlers handlers}))))
+      (Bilbo.transit/read-string data-string :json-verbose {:handlers handlers}))))
 
 (defn read-state-file
   [filepath]
   (go
     (try
-      (when (find.fs/path-exists? filepath)
-        (let [data-string (find.bytes/to-string (find.fs/read-file filepath))]
+      (when (Bilbo.fs/path-exists? filepath)
+        (let [data-string (Bilbo.bytes/to-string (Bilbo.fs/read-file filepath))]
           (transit-read data-string)))
       (catch Exception ex (println ::read-state-file ex)))))
 
@@ -172,8 +172,8 @@
   (go
     (try
       (let [data-string (transit-write data)]
-        (find.fs/make-parents filepath)
-        (find.fs/write-file filepath data-string))
+        (Bilbo.fs/make-parents filepath)
+        (Bilbo.fs/write-file filepath data-string))
       (catch Exception ex (println :write-state-file ex)))))
 
 (defn send-krpc-request-fn
@@ -185,7 +185,7 @@
     (go
       (loop []
         (when-let [{:keys [msg] :as value} (<! msg|tap)]
-          (when-let [txn-id (some-> (:t msg) (find.codec/hex-to-string))]
+          (when-let [txn-id (some-> (:t msg) (Bilbo.codec/hex-to-string))]
             (when-let [response| (get @requestsA txn-id)]
               (put! response| value)
               (close! response|)
@@ -195,7 +195,7 @@
       ([msg node]
        (send-krpc-request msg node (timeout 2000)))
       ([msg {:keys [host port]} timeout|]
-       (let [txn-id (find.codec/hex-to-string (:t msg))
+       (let [txn-id (Bilbo.codec/hex-to-string (:t msg))
              response| (chan 1)]
          (put! send| {:msg msg
                       :host host
@@ -225,13 +225,13 @@
 
     (def targetB (js/Buffer.from (hash-string "5")  "hex"))
 
-    (def sm (sorted-map-by (find.seed/hash-key-distance-comparator-fn targetB)))
+    (def sm (sorted-map-by (Bilbo.seed/hash-key-distance-comparator-fn targetB)))
 
     (def sm (->
              (reduce
               (fn [result letter]
                 (assoc result (hash-string letter) letter))
-              (sorted-map-by (find.seed/hash-key-distance-comparator-fn targetB))
+              (sorted-map-by (Bilbo.seed/hash-key-distance-comparator-fn targetB))
               (shuffle ["0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "a" "b" "c" "d" "e" "f"]))
              (assoc (hash-string "2") "2")))
 
@@ -288,11 +288,11 @@
 (comment
 
   (time
-   (let [byte-arr (find.bytes/byte-array 20)]
+   (let [byte-arr (Bilbo.bytes/byte-array 20)]
      (dotimes [i 100000]
        (let [x (mod i 20)]
          (aget byte-arr x)
-         (find.bytes/aset-uint8 byte-arr x x)))
+         (Bilbo.bytes/aset-uint8 byte-arr x x)))
      (vec byte-arr)))
 
   ; jvm    "Elapsed time: 1124.560132 msecs"
@@ -301,12 +301,12 @@
 
 
   (time
-   (let [buffer (find.bytes/buffer-allocate 20)]
+   (let [buffer (Bilbo.bytes/buffer-allocate 20)]
      (dotimes [i 10000000]
        (let [x (mod i 20) #_(unchecked-remainder-int i 20)]
-         (find.bytes/get-byte buffer x)
-         (find.bytes/put-byte buffer x x)))
-     (vec (find.bytes/to-byte-array buffer))))
+         (Bilbo.bytes/get-byte buffer x)
+         (Bilbo.bytes/put-byte buffer x x)))
+     (vec (Bilbo.bytes/to-byte-array buffer))))
 
   ; jvm    "Elapsed time: 122.298044 msecs"
   ; nodejs "Elapsed time: 82.160827 msecs"
@@ -314,20 +314,20 @@
 
   ; aget needs type hint ^bytes
   (time
-   (let [^bytes byte-arr (find.bytes/byte-array 20)]
+   (let [^bytes byte-arr (Bilbo.bytes/byte-array 20)]
      (dotimes [i 100000]
        (let [^int x (mod i 20)]
          (aget byte-arr x)
-         (find.bytes/aset-uint8 byte-arr x x)))
+         (Bilbo.bytes/aset-uint8 byte-arr x x)))
      (vec byte-arr)))
 
 
   (time
-   (let [byte-arr (find.bytes/byte-array 20)]
+   (let [byte-arr (Bilbo.bytes/byte-array 20)]
      (dotimes [i 10000000]
        (let [x (mod i 20)]
-         (find.bytes/aget-byte byte-arr x)
-         (find.bytes/aset-uint8 byte-arr x x)))
+         (Bilbo.bytes/aget-byte byte-arr x)
+         (Bilbo.bytes/aset-uint8 byte-arr x x)))
      (vec byte-arr)))
 
   ; jvm    "Elapsed time: 704.516302 msecs"
@@ -335,7 +335,7 @@
 
 
   (time
-   (let [^bytes byte-arr (find.bytes/byte-array 20)]
+   (let [^bytes byte-arr (Bilbo.bytes/byte-array 20)]
      (dotimes [i 10000000]
        (let [x (unchecked-remainder-int i 20)]
          (aget byte-arr x)
@@ -345,17 +345,17 @@
   ; "Elapsed time: 655.999327 msecs"
 
   (time
-   (let [byte-arr (find.bytes/byte-array 20)]
+   (let [byte-arr (Bilbo.bytes/byte-array 20)]
      (dotimes [i 100000000]
-       (find.bytes/alength byte-arr))))
+       (Bilbo.bytes/alength byte-arr))))
 
   ; jvm "Elapsed time: 51.61525 msecs"
   ; nodejs "Elapsed time: 139.426112 msecs"
 
   (time
-   (let [ba (find.bytes/byte-array 20)
+   (let [ba (Bilbo.bytes/byte-array 20)
          foo (fn []
-               (find.bytes/alength ba))]
+               (Bilbo.bytes/alength ba))]
      (dotimes [i 10000000]
        (unchecked-add i (foo))
        #_(+ i (foo)))))
@@ -404,18 +404,18 @@
 
   (time
    (dotimes [i 1000000]
-     (let [bb (find.bytes/buffer-allocate 20)]
+     (let [bb (Bilbo.bytes/buffer-allocate 20)]
        (dotimes [i 20]
-         (find.bytes/put-uint8 bb i 8))
-       (find.bytes/to-byte-array bb))))
+         (Bilbo.bytes/put-uint8 bb i 8))
+       (Bilbo.bytes/to-byte-array bb))))
 
   ; "Elapsed time: 250.540999 msecs"
 
   (time
    (dotimes [i 1000000]
-     (let [ba (find.bytes/byte-array 20)]
+     (let [ba (Bilbo.bytes/byte-array 20)]
        (dotimes [i 20]
-         (find.bytes/aset-uint8 ba i 8))
+         (Bilbo.bytes/aset-uint8 ba i 8))
        ba)))
 
   ; "Elapsed time: 1281.031404 msecs"
@@ -423,15 +423,15 @@
 
 
   (time
-   (let [bb (find.bytes/buffer-allocate 20)]
+   (let [bb (Bilbo.bytes/buffer-allocate 20)]
      (dotimes [i 100000000]
-       (find.bytes/put-uint8 bb 8 8)
-       (find.bytes/get-uint8 bb 8))))
+       (Bilbo.bytes/put-uint8 bb 8 8)
+       (Bilbo.bytes/get-uint8 bb 8))))
   (time
-   (let [^bytes ba (find.bytes/byte-array 20)]
+   (let [^bytes ba (Bilbo.bytes/byte-array 20)]
      (dotimes [i 100000000]
-       (find.bytes/aset-uint8 ba 8 8)
-       (find.bytes/aget-byte ba 8))))
+       (Bilbo.bytes/aset-uint8 ba 8 8)
+       (Bilbo.bytes/aget-byte ba 8))))
 
   ; bb no put "Elapsed time: 56.157778 msecs"
   ; bb with put "Elapsed time: 59.037743 msecs"
@@ -461,13 +461,13 @@
 
   (time
    (dotimes [i 1000000]
-     (find.codec/hex-to-bytes "197957dab1d2900c5f6d9178656d525e22e63300")))
+     (Bilbo.codec/hex-to-bytes "197957dab1d2900c5f6d9178656d525e22e63300")))
   ; "Elapsed time: 93.882265 msecs"
 
   (time
-   (let [ba (find.codec/hex-to-bytes "197957dab1d2900c5f6d9178656d525e22e63300")]
+   (let [ba (Bilbo.codec/hex-to-bytes "197957dab1d2900c5f6d9178656d525e22e63300")]
      (dotimes [i 1000000]
-       (find.codec/hex-to-string ba))))
+       (Bilbo.codec/hex-to-string ba))))
   ; "Elapsed time: 102.516529 msecs"
 
   ;

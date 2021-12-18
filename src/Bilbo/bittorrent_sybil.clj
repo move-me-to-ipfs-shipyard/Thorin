@@ -1,4 +1,4 @@
-(ns find.bittorrent-sybil
+(ns Bilbo.bittorrent-sybil
   (:require
    [clojure.core.async :as a :refer [chan go go-loop <! >!  take! put! offer! poll! alt! alts! close! onto-chan!
                                      pub sub unsub mult tap untap mix admix unmix pipe
@@ -9,12 +9,12 @@
    [clojure.pprint :refer [pprint]]
    [clojure.string]
 
-   [find.bytes]
-   [find.codec]
-   [find.datagram-socket]
-   [find.protocols]
-   [find.bencode]
-   [find.seed]))
+   [Bilbo.bytes]
+   [Bilbo.codec]
+   [Bilbo.datagram-socket]
+   [Bilbo.protocols]
+   [Bilbo.bencode]
+   [Bilbo.seed]))
 
 (do (set! *warn-on-reflection* true) (set! *unchecked-math* true))
 
@@ -29,8 +29,8 @@
            infohash|
            count-messages-sybilA]}]
   (let [already-sybiledA (atom {})
-        self-idBA (find.bytes/random-bytes 20)
-        self-id (find.codec/hex-to-string self-idBA)
+        self-idBA (Bilbo.bytes/random-bytes 20)
+        self-id (Bilbo.codec/hex-to-string self-idBA)
 
         port 6882
         host "0.0.0.0"
@@ -48,7 +48,7 @@
         msg| (chan (sliding-buffer 1024)
                    (keep (fn [{:keys [msgBA host port]}]
                            (try
-                             {:msg (find.bencode/decode msgBA)
+                             {:msg (Bilbo.bencode/decode msgBA)
                               :host host
                               :port port}
                              (catch Exception ex nil)))))
@@ -56,7 +56,7 @@
 
         send| (chan 100)
 
-        send-krpc-request (find.seed/send-krpc-request-fn {:msg|mult msg|mult})
+        send-krpc-request (Bilbo.seed/send-krpc-request-fn {:msg|mult msg|mult})
 
         routing-tableA (atom {})]
 
@@ -68,22 +68,22 @@
     
     (go
       (<! (onto-chan! sybils| (map (fn [i]
-                                     (find.bytes/random-bytes 20))
-                                   (range 0 (find.seed/fixed-buf-size sybils|))) true))
+                                     (Bilbo.bytes/random-bytes 20))
+                                   (range 0 (Bilbo.seed/fixed-buf-size sybils|))) true))
       (doseq [node nodes-bootstrap]
         (take!
          (send-krpc-request
-          {:t (find.bytes/random-bytes 4)
+          {:t (Bilbo.bytes/random-bytes 4)
            :y "q"
            :q "find_node"
            :a {:id self-idBA
-               :target (find.seed/gen-neighbor-id self-idBA (find.bytes/random-bytes 20))}}
+               :target (Bilbo.seed/gen-neighbor-id self-idBA (Bilbo.bytes/random-bytes 20))}}
           node
           (timeout 2000))
          (fn [{:keys [msg] :as value}]
            (when value
              (when-let [nodesBA (get-in msg [:r :nodes])]
-               (let [nodes (find.seed/decode-nodes nodesBA)]
+               (let [nodes (Bilbo.seed/decode-nodes nodesBA)]
                  (swap! routing-tableA merge (into {} (map (fn [node] [(:id node) node]) nodes)))
                  (onto-chan! nodes| nodes false)))))))
 
@@ -110,17 +110,17 @@
                 (swap! already-sybiledA assoc id true)
                 (take!
                  (send-krpc-request
-                  {:t (find.bytes/random-bytes 4)
+                  {:t (Bilbo.bytes/random-bytes 4)
                    :y "q"
                    :q "find_node"
                    :a {:id sybil-idBA
-                       :target (find.seed/gen-neighbor-id (:idBA node) self-idBA)}}
+                       :target (Bilbo.seed/gen-neighbor-id (:idBA node) self-idBA)}}
                   node
                   (timeout 2000))
                  (fn [{:keys [msg] :as value}]
                    (when value
                      (when-let [nodesBA (get-in msg [:r :nodes])]
-                       (let [nodes (find.seed/decode-nodes nodesBA)]
+                       (let [nodes (Bilbo.seed/decode-nodes nodesBA)]
                          (onto-chan! nodes| nodes false)))))))
               (recur n (mod (inc i) n)))
 
@@ -132,18 +132,18 @@
       (go
         (loop []
           (when-let [{:keys [msg host port] :as value} (<! msg|tap)]
-            (let [msg-y (some-> (:y msg) (find.bytes/to-string))
-                  msg-q (some-> (:q msg) (find.bytes/to-string))]
+            (let [msg-y (some-> (:y msg) (Bilbo.bytes/to-string))
+                  msg-q (some-> (:q msg) (Bilbo.bytes/to-string))]
               (cond
 
                 (and (= msg-y "q")  (= msg-q "ping"))
                 (let [txn-idBA  (:t msg)
                       node-idBA (get-in msg [:a :id])]
-                  (if (or (not txn-idBA) (not= (find.bytes/alength node-idBA) 20))
+                  (if (or (not txn-idBA) (not= (Bilbo.bytes/alength node-idBA) 20))
                     (do nil :invalid-data)
                     (put! send| {:msg {:t txn-idBA
                                        :y "r"
-                                       :r {:id (find.seed/gen-neighbor-id node-idBA self-idBA)}}
+                                       :r {:id (Bilbo.seed/gen-neighbor-id node-idBA self-idBA)}}
                                  :host host
 
                                  :port port})))
@@ -152,10 +152,10 @@
                 (let [txn-idBA  (:t msg)
                       node-idBA (get-in msg [:a :id])
                       target-idBA (get-in msg [:a :target])]
-                  (if (or (not txn-idBA) (not= (find.bytes/alength node-idBA) 20))
+                  (if (or (not txn-idBA) (not= (Bilbo.bytes/alength node-idBA) 20))
                     (println "invalid query args: find_node")
-                    (put! send| {:msg {:id (find.seed/gen-neighbor-id node-idBA self-idBA)
-                                       :nodes (find.seed/encode-nodes (take 8 @routing-tableA))}
+                    (put! send| {:msg {:id (Bilbo.seed/gen-neighbor-id node-idBA self-idBA)
+                                       :nodes (Bilbo.seed/encode-nodes (take 8 @routing-tableA))}
                                  :host host
 
                                  :port port})))
@@ -164,8 +164,8 @@
                 (let [infohashBA (get-in msg [:a :info_hash])
                       txn-idBA (:t msg)
                       node-idBA (get-in msg [:a :id])
-                      tokenBA (-> (find.bytes/buffer-wrap infohashBA 0 4) (find.bytes/to-byte-array))]
-                  (if (or (not txn-idBA) (not= (find.bytes/alength node-idBA) 20) (not= (find.bytes/alength infohashBA) 20))
+                      tokenBA (-> (Bilbo.bytes/buffer-wrap infohashBA 0 4) (Bilbo.bytes/to-byte-array))]
+                  (if (or (not txn-idBA) (not= (Bilbo.bytes/alength node-idBA) 20) (not= (Bilbo.bytes/alength infohashBA) 20))
                     (println "invalid query args: get_peers")
                     (do
                       (put! infohash| {:infohashBA infohashBA})
@@ -174,8 +174,8 @@
                          (clj->js
                           {:t txn-idB
                            :y "r"
-                           :r {:id (find.seed/gen-neighbor-id infohashB self-idB)
-                               :nodes (find.seed/encode-nodes (take 8 @routing-tableA))
+                           :r {:id (Bilbo.seed/gen-neighbor-id infohashB self-idB)
+                               :nodes (Bilbo.seed/encode-nodes (take 8 @routing-tableA))
                                :token tokenB}})
                          rinfo))))
 
@@ -183,7 +183,7 @@
                 (let [infohashBA   (get-in msg [:a :info_hash])
                       txn-idBA (:t msg)
                       node-idBA (get-in msg [:a :id])
-                      tokenBA (-> (find.bytes/buffer-wrap infohashBA 0 4) (find.bytes/to-byte-array))]
+                      tokenBA (-> (Bilbo.bytes/buffer-wrap infohashBA 0 4) (Bilbo.bytes/to-byte-array))]
                   (cond
                     (not txn-idBA)
                     (println "invalid query args: announce_peer")
@@ -198,7 +198,7 @@
                          (clj->js
                           {:t txn-idB
                            :y "r"
-                           :r {:id (find.seed/gen-neighbor-id infohashB self-idB)}})
+                           :r {:id (Bilbo.seed/gen-neighbor-id infohashB self-idB)}})
                          rinfo)
                       (put! infohash| {:infohashBA infohashBA}))))
 
@@ -216,23 +216,23 @@
            port]}]
   (let [ex| (chan 1)
         evt| (chan (sliding-buffer 10))
-        socket (find.datagram-socket/create
+        socket (Bilbo.datagram-socket/create
                 {:host host
                  :port port
                  :evt| evt|
                  :msg| msg|
                  :ex| ex|})
         release (fn []
-                  (find.protocols/close* socket))]
+                  (Bilbo.protocols/close* socket))]
     (go
       (loop []
         (alt!
           send|
           ([{:keys [msg host port] :as value}]
            (when value
-             (find.protocols/send*
+             (Bilbo.protocols/send*
               socket
-              (find.bencode/encode msg)
+              (Bilbo.bencode/encode msg)
               {:host host
                :port port})
              (recur)))

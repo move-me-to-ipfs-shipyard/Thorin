@@ -1,4 +1,4 @@
-(ns find.codec
+(ns Bilbo.codec
   (:import
    (io.netty.buffer ByteBufUtil)
    #_(org.apache.commons.codec.binary Hex)))
@@ -29,12 +29,12 @@
                                                 timeout to-chan  sliding-buffer dropping-buffer
                                                 pipeline pipeline-async]])
     (require '[expanse.codec.core :as codec.core])
-    (require '[find.bytes])
+    (require '[Bilbo.bytes])
     (import (io.netty.buffer ByteBufUtil)))
   
   
   
-  (let [hex (ByteBufUtil/hexDump (find.bytes/random-bytes 20))]
+  (let [hex (ByteBufUtil/hexDump (Bilbo.bytes/random-bytes 20))]
     (= hex
        (ByteBufUtil/hexDump (ByteBufUtil/decodeHexDump hex))))
   
