@@ -7,9 +7,14 @@
    [clojure.core.async.impl.protocols :refer [closed?]]
 
    [find.bytes]
-   [find.protocols])
+   [find.protocols]
+   [manifold.deferred :as d]
+   [manifold.stream :as sm]
+   [aleph.udp])
   (:import
-   (java.net InetSocketAddress InetAddress)))
+   (java.net InetSocketAddress InetAddress)
+   (io.netty.bootstrap Bootstrap)
+   (io.netty.channel ChannelPipeline)))
 
 (do (set! *warn-on-reflection* true) (set! *unchecked-math* true))
 
@@ -22,7 +27,56 @@
            :ex|]
     :or {host "0.0.0.0"
          port 6881}}]
-  (let []))
+  (let [streamV (volatile! nil)
+
+        socket
+        (reify
+          find.protocols/DatagramSocket
+          (listen*
+            [t]
+            (->
+             (d/chain
+              (aleph.udp/socket {:socket-address (InetSocketAddress. ^String host ^int port)
+                                 :insecure? true})
+              (fn [stream]
+                (vreset! streamV stream)
+                (put! evt| {:op :listening})
+                stream)
+              (fn [stream]
+                (d/loop []
+                  (->
+                   (sm/take! stream ::none)
+                   (d/chain
+                    (fn [msg]
+                      (when-not (identical? msg ::none)
+                        (let [^InetSocketAddress inet-socket-address (:sender msg)]
+                          #_[^InetAddress inet-address (.getAddress inet-socket-address)]
+                          #_(.getHostAddress inet-address)
+                          (put! msg| {:msgBA (:message msg)
+                                      :host (.getHostString inet-socket-address)
+                                      :port (.getPort inet-socket-address)}))
+                        (d/recur))))
+                   (d/catch Exception (fn [ex]
+                                        (put! ex| ex)
+                                        (find.protocols/close* t)))))))
+             (d/catch Exception (fn [ex]
+                                  (put! ex| ex)
+                                  (find.protocols/close* t)))))
+          find.protocols/Send
+          (send*
+            [_ byte-arr {:keys [host port]}]
+            (sm/put! @streamV {:host host
+                               :port port
+                               :message byte-arr}))
+          find.protocols/Close
+          (close*
+            [_]
+            (when-let [stream @streamV]
+              (sm/close! stream)))
+          clojure.lang.IDeref
+          (deref [_] @streamV))]
+
+    socket))
 
 
 (comment
