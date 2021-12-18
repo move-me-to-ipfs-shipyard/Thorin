@@ -18,6 +18,13 @@
    [Bilbo.bencode]
 
    [Bilbo.seed]
+   [Bilbo.dried-figs]
+   [Bilbo.hazelnuts]
+   [Bilbo.black-grapes]
+   [Bilbo.salt]
+   [Bilbo.tomatoes]
+   [Bilbo.green-beans]
+   [Bilbo.corn-cobs]
 
    [Bilbo.db :as Bilbo.db]
 
