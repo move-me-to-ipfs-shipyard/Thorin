@@ -1,14 +1,17 @@
 (ns Thorin.main
   (:gen-class)
   (:require
-   [clojure.core.async :as a :refer [chan go go-loop <! >! <!! >!!  take! put! offer! poll! alt! alts! close! onto-chan!
-                                     pub sub unsub mult tap untap mix admix unmix pipe
-                                     timeout to-chan  sliding-buffer dropping-buffer
-                                     pipeline pipeline-async]]
-   [clojure.string]
+   [clojure.core.async :as Little-Rock
+    :refer [chan put! take! close! offer! to-chan! timeout thread
+            sliding-buffer dropping-buffer
+            go >! <! >!! <!! alt! alts! do-alts
+            mult tap untap pub sub unsub mix unmix admix
+            pipe pipeline pipeline-async]]
+   [clojure.java.io :as Wichita.java.io]
+   [clojure.string :as Wichita.string]
+   [clojure.repl :as Wichita.repl]
    [clojure.pprint :refer [pprint]]
-   [clojure.walk]
-   [clojure.java.io :as io]
+   [clojure.walk :as Wichita.walk]
 
    [Thorin.fs]
    [Thorin.protocols]
@@ -34,9 +37,23 @@
    [Thorin.bittorrent-sybil :as Thorin.bittorrent-sybil]
    [Thorin.bittorrent-sample-infohashes :as Thorin.bittorrent-sample-infohashes])
   (:import
-   (javax.swing JFrame JLabel JButton SwingConstants JMenuBar JMenu JTextArea)
-   (java.awt Canvas Graphics)
-   (java.awt.event WindowListener KeyListener KeyEvent)))
+   (javax.swing JFrame WindowConstants ImageIcon JPanel JScrollPane JTextArea BoxLayout JEditorPane ScrollPaneConstants SwingUtilities JDialog)
+   (javax.swing JMenu JMenuItem JMenuBar KeyStroke JOptionPane JToolBar JButton JToggleButton JSplitPane JTabbedPane)
+   (javax.swing.border EmptyBorder)
+   (java.awt Canvas Graphics Graphics2D Shape Color Polygon Dimension BasicStroke Toolkit Insets BorderLayout)
+   (java.awt.event KeyListener KeyEvent MouseListener MouseEvent ActionListener ActionEvent ComponentListener ComponentEvent)
+   (java.awt.geom Ellipse2D Ellipse2D$Double Point2D$Double)
+   (com.formdev.flatlaf FlatLaf FlatLightLaf)
+   (com.formdev.flatlaf.extras FlatUIDefaultsInspector FlatDesktop FlatDesktop$QuitResponse FlatSVGIcon)
+   (com.formdev.flatlaf.util SystemInfo UIScale)
+   (java.util.function Consumer)
+   (java.util ServiceLoader)
+   (org.kordamp.ikonli Ikon)
+   (org.kordamp.ikonli IkonProvider)
+   (org.kordamp.ikonli.swing FontIcon)
+   (org.kordamp.ikonli.codicons Codicons)
+   (net.miginfocom.swing MigLayout)
+   (net.miginfocom.layout ConstraintParser LC UnitValue)))
 
 (println "clojure.core.async.pool-size" (System/getProperty "clojure.core.async.pool-size"))
 (println "clojure.compiler.direct-linking" (System/getProperty "clojure.compiler.direct-linking"))
@@ -47,6 +64,162 @@
 (declare
  process-print-info
  process-count)
+
+(defn force-resize
+  []
+  (let [{:keys [^JFrame jframe]} @stateA]
+    (let [width (.getWidth jframe)
+          height (.getHeight jframe)]
+      (.setSize jframe (Dimension. (+ 1 width) height))
+      (.setSize jframe (Dimension. width height)))))
+
+(defn create-jframe
+  []
+  (let [{:keys [^String jframe-title
+                resize|]} @stateA]
+    (let [jframe (JFrame. jframe-title)
+          root-panel (JPanel.)
+          screenshotsMode? (Boolean/parseBoolean (System/getProperty "flatlaf.demo.screenshotsMode"))
+
+          on-menubar-item (fn [f]
+                            (reify ActionListener
+                              (actionPerformed [_ event]
+                                (SwingUtilities/invokeLater
+                                 (reify Runnable
+                                   (run [_]
+                                     (f _ event)))))))
+
+          on-menu-item-show-dialog (on-menubar-item (fn [_ event] (JOptionPane/showMessageDialog jframe (.getActionCommand ^ActionEvent event) "menu bar item" JOptionPane/PLAIN_MESSAGE)))]
+
+      (swap! stateA merge {:jframe jframe})
+
+      (doto root-panel
+        #_(.setLayout (BoxLayout. root-panel BoxLayout/Y_AXIS))
+        (.setLayout (MigLayout. "insets 10"
+                                "[grow,shrink,fill]"
+                                "[grow,shrink,fill]")))
+
+      (doto jframe
+        (.add root-panel)
+        (.addComponentListener (let []
+                                 (reify ComponentListener
+                                   (componentHidden [_ event])
+                                   (componentMoved [_ event])
+                                   (componentResized [_ event] (put! resize| (.getTime (java.util.Date.))))
+                                   (componentShown [_ event])))))
+
+
+      (let [jmenubar (JMenuBar.)]
+        (doto jmenubar
+          (.add (doto (JMenu.)
+                  (.setText "file")
+                  (.setMnemonic \F)
+                  (.add (doto (JMenuItem.)
+                          (.setText "new")
+                          (.setAccelerator (KeyStroke/getKeyStroke KeyEvent/VK_N (-> (Toolkit/getDefaultToolkit) (.getMenuShortcutKeyMask))))
+                          (.setMnemonic \U)
+                          (.addActionListener on-menu-item-show-dialog)))
+                  (.add (doto (JMenuItem.)
+                          (.setText "exit")
+                          (.setAccelerator (KeyStroke/getKeyStroke KeyEvent/VK_Q (-> (Toolkit/getDefaultToolkit) (.getMenuShortcutKeyMask))))
+                          (.setMnemonic \X)
+                          (.addActionListener (on-menubar-item (fn [_ event]
+                                                                 (.dispose jframe)))))))))
+
+        (.setJMenuBar jframe jmenubar))
+
+      (FlatDesktop/setQuitHandler (reify Consumer
+                                    (accept [_ response]
+                                      (.performQuit ^FlatDesktop$QuitResponse response))
+                                    (andThen [_ after] after)))
+
+      (let [tabbed-pane (JTabbedPane.)
+            dried-figs-panel (JPanel.)
+            hazelnuts-panel (JPanel.)
+            black-grapes-panel (JPanel.)
+            salt-panel (JPanel.)
+            tomatoes-panel (JPanel.)
+            green-beans-panel (JPanel.)
+            corn-cobs-panel (JPanel.)]
+
+        (doto tabbed-pane
+          (.setTabLayoutPolicy JTabbedPane/SCROLL_TAB_LAYOUT)
+          (.addTab "dried-figs" dried-figs-panel)
+          (.addTab "hazelnuts" hazelnuts-panel)
+          (.addTab "black-grapes" black-grapes-panel)
+          (.addTab "salt" salt-panel)
+          (.addTab "tomatoes" tomatoes-panel)
+          (.addTab "green-beans" green-beans-panel)
+          (.addTab "corn-cobs" corn-cobs-panel)
+          (.setSelectedIndex 0))
+
+        (Thorin.dried-figs/process {:tab-panel dried-figs-panel
+                                    :resize| resize|})
+
+        (.add root-panel tabbed-pane))
+
+      (when-let [url (Wichita.java.io/resource "icon.png")]
+        (.setIconImage jframe (.getImage (ImageIcon. url))))
+
+      nil)))
+
+(defn window
+  []
+  (let [{:keys [jframe-title]} @stateA]
+
+    (when SystemInfo/isMacOS
+      (System/setProperty "apple.laf.useScreenMenuBar" "true")
+      (System/setProperty "apple.awt.application.name" jframe-title)
+      (System/setProperty "apple.awt.application.appearance" "system"))
+
+    (when SystemInfo/isLinux
+      (JFrame/setDefaultLookAndFeelDecorated true)
+      (JDialog/setDefaultLookAndFeelDecorated true))
+
+    (when (and
+           (not SystemInfo/isJava_9_orLater)
+           (= (System/getProperty "flatlaf.uiScale") nil))
+      (System/setProperty "flatlaf.uiScale" "2x"))
+
+    
+
+    (SwingUtilities/invokeLater
+     (reify Runnable
+       (run [_]
+
+         (FlatLightLaf/setup)
+
+         (create-jframe)
+
+         (let [{:keys [^JFrame jframe]} @stateA]
+           (.setPreferredSize jframe
+                              (let [size (-> (Toolkit/getDefaultToolkit) (.getScreenSize))]
+                                (Dimension. (UIScale/scale 1024) (UIScale/scale 576)))
+                              #_(if SystemInfo/isJava_9_orLater
+                                  (Dimension. 830 440)
+                                  (Dimension. 1660 880)))
+
+           #_(doto jframe
+               (.setDefaultCloseOperation WindowConstants/DISPOSE_ON_CLOSE #_WindowConstants/EXIT_ON_CLOSE)
+               (.setSize 2400 1600)
+               (.setLocation 1300 200)
+               #_(.add panel)
+               (.setVisible true))
+           (doto jframe
+             (.setDefaultCloseOperation WindowConstants/DISPOSE_ON_CLOSE #_WindowConstants/EXIT_ON_CLOSE)
+             (.pack)
+             (.setLocationRelativeTo nil)
+             (.setVisible true))
+
+
+           
+
+           (do
+             (force-resize))))))))
+
+(defn reload
+  []
+  (require '[Thorin.main] :reload))
 
 (defn -main [& args]
   (println :-main)
@@ -161,7 +334,7 @@
                     (close! nodes-to-sample|)
                     (close! nodes-from-sampling|)
                     (close! nodesBA|)
-                    (a/merge stop|s)))
+                    (Little-Rock/merge stop|s)))
 
         _ (swap! stateA merge
                  {:stateA stateA
@@ -196,16 +369,15 @@
                   :count-discoveryA (atom 0)
                   :count-discovery-activeA (atom 0)
                   :count-messagesA count-messagesA
-                  :count-messages-sybilA (atom 0)})
+                  :count-messages-sybilA (atom 0)}
+                 
+                 {:jframe nil
+                  :jframe-title "i will reclaim peer-to-peer Erebor, like Jesus turns water into wine"
+                  :resize| (chan (sliding-buffer 1))})
 
         state @stateA]
 
-    (let [jframe (JFrame. "i will reclaim peer-to-peer Erebor, like Jesus turns water into wine")]
-      (doto jframe
-        (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
-        (.setSize 1600 1200)
-        (.setLocationByPlatform true)
-        (.setVisible true)))
+    (window)
 
     #_(go
 
