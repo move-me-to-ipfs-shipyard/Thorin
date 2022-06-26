@@ -1,4 +1,4 @@
-(ns Thorin.dried-figs
+(ns Thorin.B12
   (:require
    [clojure.core.async
     :refer [chan put! take! close! offer! to-chan! timeout thread

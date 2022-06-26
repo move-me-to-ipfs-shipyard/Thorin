@@ -19,15 +19,16 @@
    [Thorin.bytes]
    [Thorin.codec]
    [Thorin.bencode]
+   
+   [datahike.api]
 
    [Thorin.seed]
-   [Thorin.dried-figs]
-   [Thorin.hazelnuts]
+
    [Thorin.black-grapes]
+   [Thorin.B12]
    [Thorin.salt]
-   [Thorin.tomatoes]
-   [Thorin.green-beans]
-   [Thorin.corn-cobs]
+   [Thorin.oats]
+   [Thorin.dried-figs]
 
    [Thorin.db :as Thorin.db]
 
@@ -42,22 +43,37 @@
    (javax.swing.border EmptyBorder)
    (java.awt Canvas Graphics Graphics2D Shape Color Polygon Dimension BasicStroke Toolkit Insets BorderLayout)
    (java.awt.event KeyListener KeyEvent MouseListener MouseEvent ActionListener ActionEvent ComponentListener ComponentEvent)
+   (java.awt.event  WindowListener WindowAdapter WindowEvent)
    (java.awt.geom Ellipse2D Ellipse2D$Double Point2D$Double)
    (com.formdev.flatlaf FlatLaf FlatLightLaf)
    (com.formdev.flatlaf.extras FlatUIDefaultsInspector FlatDesktop FlatDesktop$QuitResponse FlatSVGIcon)
    (com.formdev.flatlaf.util SystemInfo UIScale)
    (java.util.function Consumer)
    (java.util ServiceLoader)
-   (org.kordamp.ikonli Ikon)
-   (org.kordamp.ikonli IkonProvider)
-   (org.kordamp.ikonli.swing FontIcon)
-   (org.kordamp.ikonli.codicons Codicons)
    (net.miginfocom.swing MigLayout)
-   (net.miginfocom.layout ConstraintParser LC UnitValue)))
+   (net.miginfocom.layout ConstraintParser LC UnitValue)
+   (java.io File)
+   (java.lang Runnable)))
 
 (println "clojure.core.async.pool-size" (System/getProperty "clojure.core.async.pool-size"))
 (println "clojure.compiler.direct-linking" (System/getProperty "clojure.compiler.direct-linking"))
-(set! *warn-on-reflection* true)
+(do (set! *warn-on-reflection* true) (set! *unchecked-math* true))
+
+(taoensso.timbre/merge-config! {:min-level :warn})
+
+(defonce program-data-dirpath (or
+                               (some-> (System/getenv "FENNEC_PATH")
+                                       (.replaceFirst "^~" (System/getProperty "user.home")))
+                               (.getCanonicalPath ^File (clojure.java.io/file (System/getProperty "user.home") "Thorin"))))
+
+(defonce state-file-filepath (.getCanonicalPath ^File (clojure.java.io/file program-data-dirpath "Thorin.edn")))
+(defonce db-data-dirpath (.getCanonicalPath ^File (clojure.java.io/file program-data-dirpath "db")))
+
+
+(defonce ops| (chan 10))
+(def ^:dynamic ^JFrame jframe nil)
+(def ^:dynamic ^JPanel jroot-panel nil)
+(def ^:const jframe-title "i will reclaim peer-to-peer Erebor, like Jesus turns water into wine")
 
 (defonce stateA (atom {:searchS ""}))
 
@@ -65,164 +81,229 @@
  process-print-info
  process-count)
 
-(defn force-resize
-  []
-  (let [{:keys [^JFrame jframe]} @stateA]
-    (let [width (.getWidth jframe)
-          height (.getHeight jframe)]
-      (.setSize jframe (Dimension. (+ 1 width) height))
-      (.setSize jframe (Dimension. width height)))))
+(defn menubar-process
+  [{:keys [^JMenuBar jmenubar
+           ^JFrame jframe
+           menubar|]
+    :as opts}]
+  (let [on-menubar-item (fn [f]
+                          (reify ActionListener
+                            (actionPerformed [_ event]
+                              (SwingUtilities/invokeLater
+                               (reify Runnable
+                                 (run [_]
+                                   (f _ event)))))))
 
-(defn create-jframe
-  []
-  (let [{:keys [^String jframe-title
-                resize|]} @stateA]
-    (let [jframe (JFrame. jframe-title)
-          root-panel (JPanel.)
-          screenshotsMode? (Boolean/parseBoolean (System/getProperty "flatlaf.demo.screenshotsMode"))
-
-          on-menubar-item (fn [f]
-                            (reify ActionListener
-                              (actionPerformed [_ event]
-                                (SwingUtilities/invokeLater
-                                 (reify Runnable
-                                   (run [_]
-                                     (f _ event)))))))
-
-          on-menu-item-show-dialog (on-menubar-item (fn [_ event] (JOptionPane/showMessageDialog jframe (.getActionCommand ^ActionEvent event) "menu bar item" JOptionPane/PLAIN_MESSAGE)))]
-
-      (swap! stateA merge {:jframe jframe})
-
-      (doto root-panel
-        #_(.setLayout (BoxLayout. root-panel BoxLayout/Y_AXIS))
-        (.setLayout (MigLayout. "insets 10"
-                                "[grow,shrink,fill]"
-                                "[grow,shrink,fill]")))
-
-      (doto jframe
-        (.add root-panel)
-        (.addComponentListener (let []
-                                 (reify ComponentListener
-                                   (componentHidden [_ event])
-                                   (componentMoved [_ event])
-                                   (componentResized [_ event] (put! resize| (.getTime (java.util.Date.))))
-                                   (componentShown [_ event])))))
-
-
-      (let [jmenubar (JMenuBar.)]
-        (doto jmenubar
-          (.add (doto (JMenu.)
-                  (.setText "file")
-                  (.setMnemonic \F)
-                  (.add (doto (JMenuItem.)
-                          (.setText "new")
-                          (.setAccelerator (KeyStroke/getKeyStroke KeyEvent/VK_N (-> (Toolkit/getDefaultToolkit) (.getMenuShortcutKeyMask))))
-                          (.setMnemonic \U)
-                          (.addActionListener on-menu-item-show-dialog)))
-                  (.add (doto (JMenuItem.)
-                          (.setText "exit")
-                          (.setAccelerator (KeyStroke/getKeyStroke KeyEvent/VK_Q (-> (Toolkit/getDefaultToolkit) (.getMenuShortcutKeyMask))))
-                          (.setMnemonic \X)
-                          (.addActionListener (on-menubar-item (fn [_ event]
-                                                                 (.dispose jframe)))))))))
-
-        (.setJMenuBar jframe jmenubar))
-
-      (FlatDesktop/setQuitHandler (reify Consumer
-                                    (accept [_ response]
-                                      (.performQuit ^FlatDesktop$QuitResponse response))
-                                    (andThen [_ after] after)))
-
-      (let [tabbed-pane (JTabbedPane.)
-            dried-figs-panel (JPanel.)
-            hazelnuts-panel (JPanel.)
-            black-grapes-panel (JPanel.)
-            salt-panel (JPanel.)
-            tomatoes-panel (JPanel.)
-            green-beans-panel (JPanel.)
-            corn-cobs-panel (JPanel.)]
-
-        (doto tabbed-pane
-          (.setTabLayoutPolicy JTabbedPane/SCROLL_TAB_LAYOUT)
-          (.addTab "dried-figs" dried-figs-panel)
-          (.addTab "hazelnuts" hazelnuts-panel)
-          (.addTab "black-grapes" black-grapes-panel)
-          (.addTab "salt" salt-panel)
-          (.addTab "tomatoes" tomatoes-panel)
-          (.addTab "green-beans" green-beans-panel)
-          (.addTab "corn-cobs" corn-cobs-panel)
-          (.setSelectedIndex 0))
-
-        (Thorin.dried-figs/process {:tab-panel dried-figs-panel
-                                    :resize| resize|})
-
-        (.add root-panel tabbed-pane))
-
-      (when-let [url (Wichita.java.io/resource "icon.png")]
-        (.setIconImage jframe (.getImage (ImageIcon. url))))
-
-      nil)))
+        on-menu-item-show-dialog (on-menubar-item (fn [_ event] (JOptionPane/showMessageDialog jframe (.getActionCommand ^ActionEvent event) "menu bar item" JOptionPane/PLAIN_MESSAGE)))]
+    (doto jmenubar
+      (.add (doto (JMenu.)
+              (.setText "program")
+              (.setMnemonic \F)
+              #_(.add (doto (JMenuItem.)
+                        (.setText "settings")
+                        (.setAccelerator (KeyStroke/getKeyStroke KeyEvent/VK_S (-> (Toolkit/getDefaultToolkit) (.getMenuShortcutKeyMask))))
+                        (.setMnemonic \S)
+                        (.addActionListener
+                         (on-menubar-item (fn [_ event]
+                                            (put! menubar| {:op :settings}))))))
+              (.add (doto (JMenuItem.)
+                      (.setText "exit")
+                      (.setAccelerator (KeyStroke/getKeyStroke KeyEvent/VK_Q (-> (Toolkit/getDefaultToolkit) (.getMenuShortcutKeyMask))))
+                      (.setMnemonic \Q)
+                      (.addActionListener (on-menubar-item (fn [_ event]
+                                                             (.dispose jframe))))))))))
+  nil)
 
 (defn window
-  []
-  (let [{:keys [jframe-title]} @stateA]
+  [& args]
 
-    (when SystemInfo/isMacOS
-      (System/setProperty "apple.laf.useScreenMenuBar" "true")
-      (System/setProperty "apple.awt.application.name" jframe-title)
-      (System/setProperty "apple.awt.application.appearance" "system"))
+  #_(alter-var-root #'*ns* (constantly (find-ns 'Thorin.main)))
 
-    (when SystemInfo/isLinux
-      (JFrame/setDefaultLookAndFeelDecorated true)
-      (JDialog/setDefaultLookAndFeelDecorated true))
+  (when SystemInfo/isMacOS
+    (System/setProperty "apple.laf.useScreenMenuBar" "true")
+    (System/setProperty "apple.awt.application.name" jframe-title)
+    (System/setProperty "apple.awt.application.appearance" "system"))
 
-    (when (and
-           (not SystemInfo/isJava_9_orLater)
-           (= (System/getProperty "flatlaf.uiScale") nil))
-      (System/setProperty "flatlaf.uiScale" "2x"))
+  (when SystemInfo/isLinux
+    (JFrame/setDefaultLookAndFeelDecorated true)
+    (JDialog/setDefaultLookAndFeelDecorated true))
 
-    
+  (when (and
+         (not SystemInfo/isJava_9_orLater)
+         (= (System/getProperty "flatlaf.uiScale") nil))
+    (System/setProperty "flatlaf.uiScale" "2x"))
+
+  (FlatLaf/setGlobalExtraDefaults (java.util.Collections/singletonMap "@background" "#ffffff"))
+  (FlatLightLaf/setup)
+
+  #_(UIManager/put "background" Color/WHITE)
+  (FlatLaf/updateUI)
+
+  (FlatDesktop/setQuitHandler (reify Consumer
+                                (accept [_ response]
+                                  (.performQuit ^FlatDesktop$QuitResponse response))
+                                (andThen [_ after] after)))
+
+  (let [screenshotsMode? (Boolean/parseBoolean (System/getProperty "flatlaf.demo.screenshotsMode"))
+
+        jframe (JFrame. jframe-title)
+        jroot-panel (JPanel.)
+        jmenubar (JMenuBar.)]
+
+    (let []
+      (clojure.java.io/make-parents program-data-dirpath)
+      (reset! stateA {})
+
+      (let [jtabbed-pane (JTabbedPane.)
+            jpanel-black-grapes (JPanel.)
+            jpanel-B12 (JPanel.)
+            jpanel-salt (JPanel.)
+            jpanel-oats (JPanel.)
+            jpanel-dried-figs (JPanel.)]
+
+        (doto jtabbed-pane
+          (.setTabLayoutPolicy JTabbedPane/SCROLL_TAB_LAYOUT)
+          (.addTab "black-grapes" jpanel-black-grapes)
+          (.addTab "B12" jpanel-B12)
+          (.addTab "salt" jpanel-salt)
+          (.addTab "oats" jpanel-oats)
+          (.addTab "dried-figs" jpanel-dried-figs)
+          (.setSelectedComponent jpanel-oats))
+
+        (Thorin.oats/process {:jpanel-tab jpanel-oats
+                              :db-data-dirpath db-data-dirpath})
+
+        (.add jroot-panel jtabbed-pane))
+
+      (clojure.java.io/make-parents db-data-dirpath)
+      (let [config {:store {:backend :file :path db-data-dirpath}
+                    :keep-history? true
+                    :name "main"}
+            _ (when-not (datahike.api/database-exists? config)
+                (datahike.api/create-database config))
+            conn (datahike.api/connect config)]
+
+        (datahike.api/transact
+         conn
+         [{:db/cardinality :db.cardinality/one
+           :db/ident :id
+           :db/unique :db.unique/identity
+           :db/valueType :db.type/uuid}
+          {:db/ident :name
+           :db/valueType :db.type/string
+           :db/cardinality :db.cardinality/one}])
+
+        (datahike.api/transact
+         conn
+         [{:id #uuid "3e7c14ce-5f00-4ac2-9822-68f7d5a60952"
+           :name  "datahike"}
+          {:id #uuid "f82dc4f3-59c1-492a-8578-6f01986cc4c2"
+           :name  "clojure"}
+          {:id #uuid "5358b384-3568-47f9-9a40-a9a306d75b12"
+           :name  "Little-Rock"}])
+
+        (->>
+         (datahike.api/q '[:find ?e ?n
+                           :where
+                           [?e :name ?n]]
+                         @conn)
+         (println))
+
+        (->>
+         (datahike.api/q '[:find [?ident ...]
+                           :where [_ :db/ident ?ident]]
+                         @conn)
+         (sort)
+         (println))))
 
     (SwingUtilities/invokeLater
      (reify Runnable
        (run [_]
 
-         (FlatLightLaf/setup)
+            (doto jframe
+              (.add jroot-panel)
+              (.addComponentListener (let []
+                                       (reify ComponentListener
+                                         (componentHidden [_ event])
+                                         (componentMoved [_ event])
+                                         (componentResized [_ event])
+                                         (componentShown [_ event]))))
+              (.addWindowListener (proxy [WindowAdapter] []
+                                    (windowClosing [event]
+                                      (let [event ^WindowEvent event]
+                                        #_(println :window-closing)
+                                        #_(put! host| true)
+                                        (-> event (.getWindow) (.dispose)))))))
 
-         (create-jframe)
+            (doto jroot-panel
+              #_(.setLayout (BoxLayout. jroot-panel BoxLayout/Y_AXIS))
+              (.setLayout (MigLayout. "insets 10"
+                                      "[grow,shrink,fill]"
+                                      "[grow,shrink,fill]")))
 
-         (let [{:keys [^JFrame jframe]} @stateA]
-           (.setPreferredSize jframe
-                              (let [size (-> (Toolkit/getDefaultToolkit) (.getScreenSize))]
-                                (Dimension. (UIScale/scale 1024) (UIScale/scale 576)))
-                              #_(if SystemInfo/isJava_9_orLater
-                                  (Dimension. 830 440)
-                                  (Dimension. 1660 880)))
+            (menubar-process
+             {:jmenubar jmenubar
+              :jframe jframe
+              :menubar| ops|})
+            (.setJMenuBar jframe jmenubar)
 
-           #_(doto jframe
-               (.setDefaultCloseOperation WindowConstants/DISPOSE_ON_CLOSE #_WindowConstants/EXIT_ON_CLOSE)
-               (.setSize 2400 1600)
-               (.setLocation 1300 200)
-               #_(.add panel)
-               (.setVisible true))
-           (doto jframe
-             (.setDefaultCloseOperation WindowConstants/DISPOSE_ON_CLOSE #_WindowConstants/EXIT_ON_CLOSE)
-             (.pack)
-             (.setLocationRelativeTo nil)
-             (.setVisible true))
+            (.setPreferredSize jframe
+                               (let [size (-> (Toolkit/getDefaultToolkit) (.getScreenSize))]
+                                 (Dimension. (* 0.7 (.getWidth size)) (* 0.7 (.getHeight size)))
+                                 #_(Dimension. (UIScale/scale 1024) (UIScale/scale 576)))
+                               #_(if SystemInfo/isJava_9_orLater
+                                   (Dimension. 830 440)
+                                   (Dimension. 1660 880)))
+
+            #_(doto jframe
+                (.setDefaultCloseOperation WindowConstants/DISPOSE_ON_CLOSE #_WindowConstants/EXIT_ON_CLOSE)
+                (.setSize 2400 1600)
+                (.setLocation 1300 200)
+                #_(.add panel)
+                (.setVisible true))
+
+            #_(println :before (.getGraphics canvas))
+            (doto jframe
+              (.setDefaultCloseOperation WindowConstants/DISPOSE_ON_CLOSE #_WindowConstants/EXIT_ON_CLOSE)
+              (.pack)
+              (.setLocationRelativeTo nil)
+              (.setVisible true))
+            #_(println :after (.getGraphics canvas))
+
+            (alter-var-root #'Thorin.main/jframe (constantly jframe))
+
+            (remove-watch stateA :watch-fn)
+            (add-watch stateA :watch-fn
+                       (fn [ref wathc-key old-state new-state]
+
+                         (when (not= old-state new-state)))))))
 
 
-           
+    (go
+      (loop []
+        (when-let [value (<! ops|)]
+          (condp = (:op value)
+            :apricotseed (do nil))
 
-           (do
-             (force-resize))))))))
+          (recur))))))
 
 (defn reload
   []
-  (require '[Thorin.main] :reload))
+  (require
+   '[Thorin.seed]
+   '[Thorin.black-grapes]
+   '[Thorin.B12]
+   '[Thorin.salt]
+   '[Thorin.oats]
+   '[Thorin.dried-figs]
+   '[Thorin.main]
+   :reload))
 
 (defn -main [& args]
-  (println :-main)
+  (println "this guest gold is ours - and ours alone - i will not part with a single freedom coin - not one piece of it")
+  (println "i dont want my next job")
+  (println "Kuiil has spoken")
+  
   (let [data-dir (Thorin.fs/path-join (System/getProperty "user.dir") "data")
         state-filepath (Thorin.fs/path-join data-dir "Thorin.json")
         _ (swap! stateA merge
@@ -282,7 +363,7 @@
         nodesBA| (chan (sliding-buffer 100))
 
         send-krpc-request (Thorin.seed/send-krpc-request-fn {:msg|mult msg|mult
-                                                           :send| send|})
+                                                             :send| send|})
 
         valid-node? (fn [node]
                       (and
@@ -370,9 +451,9 @@
                   :count-discovery-activeA (atom 0)
                   :count-messagesA count-messagesA
                   :count-messages-sybilA (atom 0)}
-                 
+
                  {:jframe nil
-                  :jframe-title "i will reclaim peer-to-peer Erebor, like Jesus turns water into wine"
+                  :jframe-title jframe-title
                   :resize| (chan (sliding-buffer 1))})
 
         state @stateA]

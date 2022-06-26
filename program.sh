@@ -2,35 +2,41 @@
 
 repl(){
   clj \
-    -J-Dclojure.core.async.pool-size=1 \
-    -X:repl Ripley.core/process \
+    -J-Dclojure.core.async.pool-size=8 \
+    -X:Ripley Ripley.core/process \
     :main-ns Thorin.main
 }
 
+
 main(){
   clojure \
-    -J-Dclojure.core.async.pool-size=1 \
+    -J-Dclojure.core.async.pool-size=8 \
     -M -m Thorin.main
 }
 
-uberjar(){
+tag(){
+  COMMIT_HASH=$(git rev-parse --short HEAD)
+  COMMIT_COUNT=$(git rev-list --count HEAD)
+  TAG="$COMMIT_COUNT-$COMMIT_HASH"
+  git tag $TAG $COMMIT_HASH
+  echo $COMMIT_HASH
+  echo $TAG
+}
 
-  clojure \
-    -X:identicon Zazu.core/process \
-    :word '"Thorin"' \
-    :filename '"out/identicon/icon.png"' \
-    :size 256
+jar(){
 
-  rm -rf out/*.jar
+  rm -rf out/*.jar out/classes
+  COMMIT_HASH=$(git rev-parse --short HEAD)
+  COMMIT_COUNT=$(git rev-list --count HEAD)
   clojure \
-    -X:uberjar Genie.core/process \
+    -X:Genie Genie.core/process \
     :main-ns Thorin.main \
-    :filename "\"out/Thorin-$(git rev-parse --short HEAD).jar\"" \
-    :paths '["src" "out/identicon"]'
+    :filename "\"out/Thorin-$COMMIT_COUNT-$COMMIT_HASH.jar\"" \
+    :paths '["src"]'
 }
 
 release(){
-  uberjar
+  jar
 }
 
 "$@"
