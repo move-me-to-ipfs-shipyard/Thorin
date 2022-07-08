@@ -1,4 +1,4 @@
-#_(ns Thorin.dried-figs
+(ns Thorin.dried-figs
   (:require
    [clojure.core.async
     :refer [chan put! take! close! offer! to-chan! timeout thread

@@ -28,7 +28,7 @@
    [Thorin.B12]
    [Thorin.salt]
    [Thorin.bread]
-   [Thorin.wine]
+   [Thorin.dried-figs]
 
    [Thorin.db :as Thorin.db]
 
@@ -159,7 +159,7 @@
             jpanel-B12 (JPanel.)
             jpanel-salt (JPanel.)
             jpanel-bread (JPanel.)
-            jpanel-wine (JPanel.)]
+            jpanel-dried-figs (JPanel.)]
 
         (doto jtabbed-pane
           (.setTabLayoutPolicy JTabbedPane/SCROLL_TAB_LAYOUT)
@@ -167,7 +167,7 @@
           (.addTab "B12" jpanel-B12)
           (.addTab "salt" jpanel-salt)
           (.addTab "bread" jpanel-bread)
-          (.addTab "wine" jpanel-wine)
+          (.addTab "dried-figs" jpanel-dried-figs)
           (.setSelectedComponent jpanel-bread))
 
         (Thorin.bread/process {:jpanel-tab jpanel-bread
@@ -295,7 +295,7 @@
    '[Thorin.B12]
    '[Thorin.salt]
    '[Thorin.bread]
-   '[Thorin.wine]
+   '[Thorin.dried-figs]
    '[Thorin.main]
    :reload))
 
