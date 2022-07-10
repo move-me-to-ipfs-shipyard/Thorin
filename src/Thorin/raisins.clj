@@ -1,4 +1,4 @@
-(ns Thorin.wine
+(ns Thorin.raisins
   (:require
    [clojure.core.async
     :refer [chan put! take! close! offer! to-chan! timeout thread
