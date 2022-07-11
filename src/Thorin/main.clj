@@ -27,9 +27,8 @@
    [Thorin.black-grapes]
    [Thorin.B12]
    [Thorin.salt]
-   [Thorin.bread]
+   [Thorin.oats]
    [Thorin.raisins]
-
    [Thorin.db :as Thorin.db]
 
    [Thorin.bittorrent-dht :as Thorin.bittorrent-dht]
@@ -158,7 +157,7 @@
             jpanel-black-grapes (JPanel.)
             jpanel-B12 (JPanel.)
             jpanel-salt (JPanel.)
-            jpanel-bread (JPanel.)
+            jpanel-oats (JPanel.)
             jpanel-raisins (JPanel.)]
 
         (doto jtabbed-pane
@@ -166,11 +165,11 @@
           (.addTab "black-grapes" jpanel-black-grapes)
           (.addTab "B12" jpanel-B12)
           (.addTab "salt" jpanel-salt)
-          (.addTab "bread" jpanel-bread)
+          (.addTab "oats" jpanel-oats)
           (.addTab "raisins" jpanel-raisins)
-          (.setSelectedComponent jpanel-bread))
+          (.setSelectedComponent jpanel-oats))
 
-        (Thorin.bread/process {:jpanel-tab jpanel-bread
+        (Thorin.oats/process {:jpanel-tab jpanel-oats
                               :db-data-dirpath db-data-dirpath})
 
         (.add jroot-panel jtabbed-pane))
@@ -294,7 +293,7 @@
    '[Thorin.black-grapes]
    '[Thorin.B12]
    '[Thorin.salt]
-   '[Thorin.bread]
+   '[Thorin.oats]
    '[Thorin.raisins]
    '[Thorin.main]
    :reload))
