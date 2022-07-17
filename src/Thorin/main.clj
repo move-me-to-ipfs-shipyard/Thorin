@@ -29,6 +29,7 @@
    [Thorin.B12]
    [Thorin.salt]
    [Thorin.bread]
+   [Thorin.water]
    [Thorin.raisins]
 
    [Thorin.db :as Thorin.db]
@@ -161,6 +162,7 @@
             jpanel-B12 (JPanel.)
             jpanel-salt (JPanel.)
             jpanel-bread (JPanel.)
+            jpanel-water (JPanel.)
             jpanel-raisins (JPanel.)]
 
         (doto jtabbed-pane
@@ -170,6 +172,7 @@
           (.addTab "B12" jpanel-B12)
           (.addTab "salt" jpanel-salt)
           (.addTab "bread" jpanel-bread)
+          (.addTab "water" jpanel-water)
           (.addTab "raisins" jpanel-raisins)
           (.setSelectedComponent jpanel-bread))
 
@@ -299,6 +302,7 @@
    '[Thorin.B12]
    '[Thorin.salt]
    '[Thorin.bread]
+   '[Thorin.water]
    '[Thorin.raisins]
    '[Thorin.main]
    :reload))
