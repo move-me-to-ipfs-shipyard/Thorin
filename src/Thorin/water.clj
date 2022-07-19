@@ -1,4 +1,4 @@
-(ns Thorin.seed
+(ns Thorin.water
   (:require
    [clojure.core.async :as a :refer [chan go go-loop <! >!  take! put! offer! poll! alt! alts! close! onto-chan!
                                      pub sub unsub mult tap untap mix admix unmix pipe
@@ -225,13 +225,13 @@
 
     (def targetB (js/Buffer.from (hash-string "5")  "hex"))
 
-    (def sm (sorted-map-by (Thorin.seed/hash-key-distance-comparator-fn targetB)))
+    (def sm (sorted-map-by (Thorin.water/hash-key-distance-comparator-fn targetB)))
 
     (def sm (->
              (reduce
               (fn [result letter]
                 (assoc result (hash-string letter) letter))
-              (sorted-map-by (Thorin.seed/hash-key-distance-comparator-fn targetB))
+              (sorted-map-by (Thorin.water/hash-key-distance-comparator-fn targetB))
               (shuffle ["0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "a" "b" "c" "d" "e" "f"]))
              (assoc (hash-string "2") "2")))
 

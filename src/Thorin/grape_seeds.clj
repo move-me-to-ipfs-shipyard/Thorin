@@ -5,7 +5,7 @@
      [clojure.string]
      [clojure.java.io :as io]
      [clojure.walk]
-     [Thorin.seed])
+     [Thorin.water])
     (:import
      (java.io ByteArrayOutputStream ByteArrayInputStream PushbackInputStream)
      (org.apache.commons.codec.binary Hex)))
@@ -183,7 +183,7 @@
 
   (Thorin.main/reload)
 
-  (Hex/encodeHexString (Thorin.seed/random-bytes 20))
+  (Hex/encodeHexString (Thorin.water/random-bytes 20))
 
   (let [txn-id (Hex/decodeHex "aabb")
         id (Hex/decodeHex "f6212aa693453ce52ffa51f41457b2c5633a045c")

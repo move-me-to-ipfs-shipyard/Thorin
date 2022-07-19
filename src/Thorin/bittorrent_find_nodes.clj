@@ -7,7 +7,7 @@
    [clojure.core.async.impl.protocols :refer [closed?]]
    [Thorin.bytes]
    [Thorin.codec]
-   [Thorin.seed]))
+   [Thorin.water]))
 
 (do (set! *warn-on-reflection* true) (set! *unchecked-math* true))
 
@@ -32,7 +32,7 @@
               :y "q"
               :q "find_node"
               :a {:id self-idBA
-                  :target self-idBA #_(Thorin.seed/gen-neighbor-id (.randomBytes crypto 20) self-idB)}}
+                  :target self-idBA #_(Thorin.water/gen-neighbor-id (.randomBytes crypto 20) self-idB)}}
              node
              (timeout 2000))
             (fn [{:keys [msg] :as value}]
@@ -48,7 +48,7 @@
                 :y "q"
                 :q "find_node"
                 :a {:id self-idBA
-                    :target (Thorin.codec/hex-to-bytes id)  #_(Thorin.seed/gen-neighbor-id (.randomBytes crypto 20) self-idB)}}
+                    :target (Thorin.codec/hex-to-bytes id)  #_(Thorin.water/gen-neighbor-id (.randomBytes crypto 20) self-idB)}}
                node
                (timeout 2000))
               (fn [{:keys [msg] :as value}]
@@ -84,14 +84,14 @@
                                (take 1))
                               (:routing-table state))]
              (swap! stateA update-in [:routing-table-find-noded] assoc id {:node node
-                                                                           :timestamp (Thorin.seed/now)})
+                                                                           :timestamp (Thorin.water/now)})
              (take!
               (send-krpc-request
                {:t (Thorin.bytes/random-bytes 4)
                 :y "q"
                 :q "find_node"
                 :a {:id self-idBA
-                    :target self-idBA #_(Thorin.seed/gen-neighbor-id (.randomBytes crypto 20) self-idB)}}
+                    :target self-idBA #_(Thorin.water/gen-neighbor-id (.randomBytes crypto 20) self-idB)}}
                node
                (timeout 2000))
               (fn [{:keys [msg ] :as value}]
@@ -108,14 +108,14 @@
                                 (take 1))))]
              (<! (timeout 400))
              (swap! stateA update-in [:routing-table-find-noded] assoc id {:node node
-                                                                           :timestamp (Thorin.seed/now)})
+                                                                           :timestamp (Thorin.water/now)})
              (take!
               (send-krpc-request
                {:t (Thorin.bytes/random-bytes 4)
                 :y "q"
                 :q "find_node"
                 :a {:id self-idBA
-                    :target (Thorin.codec/hex-to-bytes k)  #_(Thorin.seed/gen-neighbor-id (.randomBytes crypto 20) self-idB)}}
+                    :target (Thorin.codec/hex-to-bytes k)  #_(Thorin.water/gen-neighbor-id (.randomBytes crypto 20) self-idB)}}
                node
                (timeout 2000))
               (fn [{:keys [msg] :as value}]

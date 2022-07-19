@@ -14,7 +14,7 @@
    [Thorin.datagram-socket]
    [Thorin.protocols]
    [Thorin.bencode]
-   [Thorin.seed]))
+   [Thorin.water]))
 
 (do (set! *warn-on-reflection* true) (set! *unchecked-math* true))
 
@@ -56,7 +56,7 @@
 
         send| (chan 100)
 
-        send-krpc-request (Thorin.seed/send-krpc-request-fn {:msg|mult msg|mult})
+        send-krpc-request (Thorin.water/send-krpc-request-fn {:msg|mult msg|mult})
 
         routing-tableA (atom {})]
 
@@ -69,7 +69,7 @@
     (go
       (<! (onto-chan! sybils| (map (fn [i]
                                      (Thorin.bytes/random-bytes 20))
-                                   (range 0 (Thorin.seed/fixed-buf-size sybils|))) true))
+                                   (range 0 (Thorin.water/fixed-buf-size sybils|))) true))
       (doseq [node nodes-bootstrap]
         (take!
          (send-krpc-request
@@ -77,13 +77,13 @@
            :y "q"
            :q "find_node"
            :a {:id self-idBA
-               :target (Thorin.seed/gen-neighbor-id self-idBA (Thorin.bytes/random-bytes 20))}}
+               :target (Thorin.water/gen-neighbor-id self-idBA (Thorin.bytes/random-bytes 20))}}
           node
           (timeout 2000))
          (fn [{:keys [msg] :as value}]
            (when value
              (when-let [nodesBA (get-in msg [:r :nodes])]
-               (let [nodes (Thorin.seed/decode-nodes nodesBA)]
+               (let [nodes (Thorin.water/decode-nodes nodesBA)]
                  (swap! routing-tableA merge (into {} (map (fn [node] [(:id node) node]) nodes)))
                  (onto-chan! nodes| nodes false)))))))
 
@@ -114,13 +114,13 @@
                    :y "q"
                    :q "find_node"
                    :a {:id sybil-idBA
-                       :target (Thorin.seed/gen-neighbor-id (:idBA node) self-idBA)}}
+                       :target (Thorin.water/gen-neighbor-id (:idBA node) self-idBA)}}
                   node
                   (timeout 2000))
                  (fn [{:keys [msg] :as value}]
                    (when value
                      (when-let [nodesBA (get-in msg [:r :nodes])]
-                       (let [nodes (Thorin.seed/decode-nodes nodesBA)]
+                       (let [nodes (Thorin.water/decode-nodes nodesBA)]
                          (onto-chan! nodes| nodes false)))))))
               (recur n (mod (inc i) n)))
 
@@ -143,7 +143,7 @@
                     (do nil :invalid-data)
                     (put! send| {:msg {:t txn-idBA
                                        :y "r"
-                                       :r {:id (Thorin.seed/gen-neighbor-id node-idBA self-idBA)}}
+                                       :r {:id (Thorin.water/gen-neighbor-id node-idBA self-idBA)}}
                                  :host host
 
                                  :port port})))
@@ -154,8 +154,8 @@
                       target-idBA (get-in msg [:a :target])]
                   (if (or (not txn-idBA) (not= (Thorin.bytes/alength node-idBA) 20))
                     (println "invalid query args: find_node")
-                    (put! send| {:msg {:id (Thorin.seed/gen-neighbor-id node-idBA self-idBA)
-                                       :nodes (Thorin.seed/encode-nodes (take 8 @routing-tableA))}
+                    (put! send| {:msg {:id (Thorin.water/gen-neighbor-id node-idBA self-idBA)
+                                       :nodes (Thorin.water/encode-nodes (take 8 @routing-tableA))}
                                  :host host
 
                                  :port port})))
@@ -174,8 +174,8 @@
                          (clj->js
                           {:t txn-idB
                            :y "r"
-                           :r {:id (Thorin.seed/gen-neighbor-id infohashB self-idB)
-                               :nodes (Thorin.seed/encode-nodes (take 8 @routing-tableA))
+                           :r {:id (Thorin.water/gen-neighbor-id infohashB self-idB)
+                               :nodes (Thorin.water/encode-nodes (take 8 @routing-tableA))
                                :token tokenB}})
                          rinfo))))
 
@@ -198,7 +198,7 @@
                          (clj->js
                           {:t txn-idB
                            :y "r"
-                           :r {:id (Thorin.seed/gen-neighbor-id infohashB self-idB)}})
+                           :r {:id (Thorin.water/gen-neighbor-id infohashB self-idB)}})
                          rinfo)
                       (put! infohash| {:infohashBA infohashBA}))))
 
