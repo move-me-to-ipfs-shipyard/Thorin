@@ -22,7 +22,8 @@
    
    [datahike.api]
 
-   [Thorin.water]
+   [Thorin.seed]
+
    [Thorin.black-grapes]
    [Thorin.B12]
    [Thorin.salt]
@@ -289,7 +290,7 @@
 (defn reload
   []
   (require
-   '[Thorin.water]
+   '[Thorin.seed]
    '[Thorin.black-grapes]
    '[Thorin.B12]
    '[Thorin.salt]
@@ -313,7 +314,7 @@
                     :dht-keyspace {}
                     :routing-table-sampled {}
                     :routing-table-find-noded {}})
-                 (<!! (Thorin.water/read-state-file state-filepath)))
+                 (<!! (Thorin.seed/read-state-file state-filepath)))
 
         self-id (:self-id @stateA)
         self-idBA (:self-idBA @stateA)
@@ -361,7 +362,7 @@
 
         nodesBA| (chan (sliding-buffer 100))
 
-        send-krpc-request (Thorin.water/send-krpc-request-fn {:msg|mult msg|mult
+        send-krpc-request (Thorin.seed/send-krpc-request-fn {:msg|mult msg|mult
                                                              :send| send|})
 
         valid-node? (fn [node]
@@ -385,10 +386,10 @@
                                (filter (fn [node] (not (get (:routing-table-sampled @stateA) (:id node)))))
                                (map (fn [node] [(:id node) node])))
 
-        nodes-to-sample| (chan (Thorin.water/sorted-map-buffer 10000 (Thorin.water/hash-key-distance-comparator-fn  self-idBA))
+        nodes-to-sample| (chan (Thorin.seed/sorted-map-buffer 10000 (Thorin.seed/hash-key-distance-comparator-fn  self-idBA))
                                xf-node-for-sampling?)
 
-        nodes-from-sampling| (chan (Thorin.water/sorted-map-buffer 10000 (Thorin.water/hash-key-distance-comparator-fn  self-idBA))
+        nodes-from-sampling| (chan (Thorin.seed/sorted-map-buffer 10000 (Thorin.seed/hash-key-distance-comparator-fn  self-idBA))
                                    xf-node-for-sampling?)
 
         duration (* 10 60 1000)
@@ -497,10 +498,10 @@
       ; save state to file periodically
         (go
           (when-not (Thorin.fs/path-exists? state-filepath)
-            (<! (Thorin.water/write-state-file state-filepath @stateA)))
+            (<! (Thorin.seed/write-state-file state-filepath @stateA)))
           (loop []
             (<! (timeout (* 4.5 1000)))
-            (<! (Thorin.water/write-state-file state-filepath @stateA))
+            (<! (Thorin.seed/write-state-file state-filepath @stateA))
             (recur)))
 
 
@@ -522,13 +523,13 @@
                 timeout|
                 ([_]
                  (doseq [[id {:keys [timestamp]}] (:routing-table-sampled @stateA)]
-                   (when (> (- (Thorin.water/now) timestamp) (* 5 60 1000))
+                   (when (> (- (Thorin.seed/now) timestamp) (* 5 60 1000))
                      (swap! stateA update-in [:routing-table-sampled] dissoc id)))
 
                  (doseq [[id {:keys [timestamp interval]}] (:routing-table-find-noded @stateA)]
                    (when (or
-                          (and interval (> (Thorin.water/now) (+ timestamp (* interval 1000))))
-                          (> (- (Thorin.water/now) timestamp) (* 5 60 1000)))
+                          (and interval (> (Thorin.seed/now) (+ timestamp (* interval 1000))))
+                          (> (- (Thorin.seed/now) timestamp) (* 5 60 1000)))
                      (swap! stateA update-in [:routing-table-find-noded] dissoc id)))
                  (recur (timeout (* 10 1000))))
 
@@ -562,7 +563,7 @@
         (go
           (loop []
             (when-let [nodesBA (<! nodesBA|)]
-              (let [nodes (Thorin.water/decode-nodes nodesBA)]
+              (let [nodes (Thorin.seed/decode-nodes nodesBA)]
                 (>! routing-table-nodes| nodes)
                 (>! dht-keyspace-nodes| nodes)
                 (<! (onto-chan! nodes-to-sample| nodes false)))
@@ -615,7 +616,7 @@
            count-messagesA
            count-torrentsA
            count-messages-sybilA]}]
-  (let [started-at (Thorin.water/now)
+  (let [started-at (Thorin.seed/now)
         filepath (Thorin.fs/path-join data-dir "Thorin.bittorrent-dht-crawl.log.edn")
         _ (Thorin.fs/remove filepath)
         _ (Thorin.fs/make-parents filepath)
@@ -638,16 +639,16 @@
                        [:discovery [:total @count-discoveryA
                                     :active @count-discovery-activeA]]
                        [:torrents @count-torrentsA]
-                       [:nodes-to-sample| (count (Thorin.water/chan-buf nodes-to-sample|))
-                        :nodes-from-sampling| (count (Thorin.water/chan-buf nodes-from-sampling|))]
+                       [:nodes-to-sample| (count (Thorin.seed/chan-buf nodes-to-sample|))
+                        :nodes-from-sampling| (count (Thorin.seed/chan-buf nodes-from-sampling|))]
                        [:messages [:dht @count-messagesA :sybil @count-messages-sybilA]]
                        [:sockets @Thorin.bittorrent-metadata/count-socketsA]
                        [:routing-table (count (:routing-table state))]
                        [:dht-keyspace (map (fn [[id routing-table]] (count routing-table)) (:dht-keyspace state))]
                        [:routing-table-find-noded  (count (:routing-table-find-noded state))]
                        [:routing-table-sampled (count (:routing-table-sampled state))]
-                       [:sybils| (str (- (Thorin.water/fixed-buf-size sybils|) (count (Thorin.water/chan-buf sybils|))) "/" (Thorin.water/fixed-buf-size sybils|))]
-                       [:time (str (int (/ (- (Thorin.water/now) started-at) 1000 60)) "min")]]]
+                       [:sybils| (str (- (Thorin.seed/fixed-buf-size sybils|) (count (Thorin.seed/chan-buf sybils|))) "/" (Thorin.seed/fixed-buf-size sybils|))]
+                       [:time (str (int (/ (- (Thorin.seed/now) started-at) 1000 60)) "min")]]]
              (pprint info)
              (Thorin.protocols/write-string* writer (with-out-str (pprint info)))
              (Thorin.protocols/write-string* writer "\n"))

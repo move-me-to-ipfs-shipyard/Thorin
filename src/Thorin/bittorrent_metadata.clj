@@ -16,7 +16,7 @@
    [Thorin.protocols]
    [Thorin.bencode]
    [Thorin.ut-metadata]
-   [Thorin.water]))
+   [Thorin.seed]))
 
 (do (set! *warn-on-reflection* true) (set! *unchecked-math* true))
 
@@ -153,12 +153,12 @@
                            (not (get @unique-seedersA seeder)))
 
           seeders| (chan (sliding-buffer 256))
-          nodes| (chan (Thorin.water/sorted-map-buffer 1024 (Thorin.water/hash-key-distance-comparator-fn infohashBA)))
+          nodes| (chan (Thorin.seed/sorted-map-buffer 1024 (Thorin.seed/hash-key-distance-comparator-fn infohashBA)))
           nodes-seeders| (chan (sliding-buffer 256))
           seeder| (chan 1)
 
 
-          routing-table-nodes| (chan (Thorin.water/sorted-map-buffer 128 (Thorin.water/hash-key-distance-comparator-fn infohashBA)
+          routing-table-nodes| (chan (Thorin.seed/sorted-map-buffer 128 (Thorin.seed/hash-key-distance-comparator-fn infohashBA)
                                                         #_(fn [id1 id2]
                                                             (distance-compare
                                                              (xor-distance infohashB (js/Buffer.from id1 "hex"))
@@ -171,7 +171,7 @@
                                                                        (xor-distance infohashB (:idB node1))
                                                                        (xor-distance infohashB (:idB node2)))))))
 
-          _ (<! (onto-chan! routing-table-nodes| (sort-by first (Thorin.water/hash-key-distance-comparator-fn infohashBA) routing-table) false))
+          _ (<! (onto-chan! routing-table-nodes| (sort-by first (Thorin.seed/hash-key-distance-comparator-fn infohashBA) routing-table) false))
 
           send-get-peers (fn [node]
                            (go
@@ -217,7 +217,7 @@
       (go
         (loop [n 8
                i n
-               ts (Thorin.water/now)
+               ts (Thorin.seed/now)
                time-total 0]
           (let [timeout| (when (and (== i 0) (< time-total 1000))
                            (timeout 1000))
@@ -242,7 +242,7 @@
                 (= port timeout|)
                 (do
                   :cool-down
-                  (recur n n (Thorin.water/now) 0))
+                  (recur n n (Thorin.seed/now) 0))
 
                 (or (= port nodes|) (= port routing-table-nodes|) (= port nodes-seeders|))
                 (let [[id node] value]
@@ -251,7 +251,7 @@
                            (cond
                              values
                              (let [seeders (->>
-                                            (Thorin.water/decode-values values)
+                                            (Thorin.seed/decode-values values)
                                             (sequence
                                              (comp
                                               (filter valid-ip?)
@@ -262,10 +262,10 @@
 
                              nodes
                              (let [nodes (->>
-                                          (Thorin.water/decode-nodes nodes)
+                                          (Thorin.seed/decode-nodes nodes)
                                           (filter valid-ip?))]
                                (onto-chan! nodes| (map (fn [node] [(:id node) node]) nodes) false)))))
-                  (recur n (mod (inc i) n) (Thorin.water/now) (+ time-total (- (Thorin.water/now) ts)))))))))
+                  (recur n (mod (inc i) n) (Thorin.seed/now) (+ time-total (- (Thorin.seed/now) ts)))))))))
 
       (go
         (loop [n 8
@@ -323,7 +323,7 @@
                     closest-key (->>
                                  (keys (:dht-keyspace state))
                                  (concat [self-id])
-                                 (sort-by identity (Thorin.water/hash-key-distance-comparator-fn infohashBA))
+                                 (sort-by identity (Thorin.seed/hash-key-distance-comparator-fn infohashBA))
                                  (first))
                     closest-routing-table (if (= closest-key self-id)
                                             (:routing-table state)

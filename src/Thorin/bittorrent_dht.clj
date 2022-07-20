@@ -13,7 +13,7 @@
    [Thorin.datagram-socket]
    [Thorin.protocols]
 
-   [Thorin.water]))
+   [Thorin.seed]))
 
 (do (set! *warn-on-reflection* true) (set! *unchecked-math* true))
 
@@ -105,7 +105,7 @@
                   (put! send|
                         {:msg  {:t txn-idBA
                                 :y "r"
-                                :r {:id self-idBA #_(Thorin.water/gen-neighbor-id node-idB (:self-idBA @stateA))}}
+                                :r {:id self-idBA #_(Thorin.seed/gen-neighbor-id node-idB (:self-idBA @stateA))}}
                          :host host
                          :port port})))
 
@@ -117,8 +117,8 @@
                   (put! send|
                         {:msg {:t txn-idBA
                                :y "r"
-                               :r {:id self-idBA #_(Thorin.water/gen-neighbor-id node-idB (:self-idBA @stateA))
-                                   :nodes (Thorin.water/encode-nodes (take 8 (:routing-table @stateA)))}}
+                               :r {:id self-idBA #_(Thorin.seed/gen-neighbor-id node-idB (:self-idBA @stateA))
+                                   :nodes (Thorin.seed/encode-nodes (take 8 (:routing-table @stateA)))}}
                          :host host
                          :port port})))
 
@@ -134,8 +134,8 @@
                     (put! send|
                           {:msg {:t txn-idBA
                                  :y "r"
-                                 :r {:id self-idBA #_(Thorin.water/gen-neighbor-id infohashBA (:self-idBA @stateA))
-                                     :nodes (Thorin.water/encode-nodes (take 8 (:routing-table @stateA)))
+                                 :r {:id self-idBA #_(Thorin.seed/gen-neighbor-id infohashBA (:self-idBA @stateA))
+                                     :nodes (Thorin.seed/encode-nodes (take 8 (:routing-table @stateA)))
                                      :token tokenBA}}
                            :host host
                            :port port}))))
@@ -173,7 +173,7 @@
   [[id node]]
   (or
    (not (:pinged-at node))
-   (> (- (Thorin.water/now) (:pinged-at node)) (* 2 60 1000))))
+   (> (- (Thorin.seed/now) (:pinged-at node)) (* 2 60 1000))))
 
 (defn process-routing-table
   [{:as opts
@@ -182,7 +182,7 @@
            routing-table-nodes|
            send-krpc-request
            routing-table-max-size]}]
-  (let [routing-table-comparator (Thorin.water/hash-key-distance-comparator-fn self-idBA)
+  (let [routing-table-comparator (Thorin.seed/hash-key-distance-comparator-fn self-idBA)
         stop| (chan 1)]
 
     (swap! stateA update :routing-table (partial into (sorted-map-by routing-table-comparator)))
@@ -191,7 +191,7 @@
     (go
       (loop [n 4
              i 0
-             ts (Thorin.water/now)
+             ts (Thorin.seed/now)
              time-total 0]
         (when-let [nodes (<! routing-table-nodes|)]
           (let [routing-table (:routing-table @stateA)]
@@ -219,8 +219,8 @@
                  (concat nodes-near nodes-far)
                  (into (sorted-map-by routing-table-comparator))
                  (swap! stateA assoc :routing-table))
-                (recur n 0 (Thorin.water/now) 0))
-              (recur n (inc i) (Thorin.water/now) (+ time-total (- (Thorin.water/now) ts)))))))
+                (recur n 0 (Thorin.seed/now) 0))
+              (recur n (inc i) (Thorin.seed/now) (+ time-total (- (Thorin.seed/now) ts)))))))
       (close! stop|))
 
     ; ping nodes and remove unresponding
@@ -245,7 +245,7 @@
                        (timeout 2000))
                       (fn [value]
                         (if value
-                          (swap! stateA update-in [:routing-table id] assoc :pinged-at (Thorin.water/now))
+                          (swap! stateA update-in [:routing-table id] assoc :pinged-at (Thorin.seed/now))
                           (swap! stateA update-in [:routing-table] dissoc id))))))
            (recur))
 
@@ -278,7 +278,7 @@
            dht-keyspace-nodes|
            send-krpc-request
            routing-table-max-size]}]
-  (let [routing-table-comparator (Thorin.water/hash-key-distance-comparator-fn self-idBA)
+  (let [routing-table-comparator (Thorin.seed/hash-key-distance-comparator-fn self-idBA)
         stop| (chan 1)]
     (swap! stateA merge {:dht-keyspace (into {}
                                              (comp
@@ -292,21 +292,21 @@
                                              ["0"  "2"  "4"  "6"  "8"  "a"  "c"  "e"]
                                              #_["0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "a" "b" "c" "d" "e" "f"])})
     (doseq [[id routing-table] (:dht-keyspace @stateA)]
-      (swap! stateA update-in [:dht-keyspace id] (partial into (sorted-map-by (Thorin.water/hash-key-distance-comparator-fn (Thorin.codec/hex-to-bytes id))))))
+      (swap! stateA update-in [:dht-keyspace id] (partial into (sorted-map-by (Thorin.seed/hash-key-distance-comparator-fn (Thorin.codec/hex-to-bytes id))))))
     (swap! stateA update :dht-keyspace (partial into (sorted-map)))
 
     ; add nodes to routing table
     (go
       (loop [n 4
              i 0
-             ts (Thorin.water/now)
+             ts (Thorin.seed/now)
              time-total 0]
         (when-let [nodes (<! dht-keyspace-nodes|)]
           (let [dht-keyspace-keys (keys (:dht-keyspace @stateA))]
             (doseq [node nodes]
               (let [closest-key (->>
                                  dht-keyspace-keys
-                                 (sort-by identity (Thorin.water/hash-key-distance-comparator-fn (:idBA node)))
+                                 (sort-by identity (Thorin.seed/hash-key-distance-comparator-fn (:idBA node)))
                                  first)]
                 (swap! stateA update-in [:dht-keyspace closest-key] assoc (:id node) node)))
 
@@ -320,10 +320,10 @@
                           (map (fn [[id routing-table]]
                                  [id (->> routing-table
                                           (take routing-table-max-size)
-                                          (into (sorted-map-by (Thorin.water/hash-key-distance-comparator-fn (Thorin.codec/hex-to-bytes id)))))]))
+                                          (into (sorted-map-by (Thorin.seed/hash-key-distance-comparator-fn (Thorin.codec/hex-to-bytes id)))))]))
                           (into (sorted-map)))))
-                (recur n 0 (Thorin.water/now) 0))
-              (recur n (inc i) (Thorin.water/now) (+ time-total (- (Thorin.water/now) ts)))))))
+                (recur n 0 (Thorin.seed/now) 0))
+              (recur n (inc i) (Thorin.seed/now) (+ time-total (- (Thorin.seed/now) ts)))))))
       (close! stop|))
 
     ; ping nodes and remove unresponding
@@ -349,7 +349,7 @@
                        (timeout 2000))
                       (fn [value]
                         (if value
-                          (swap! stateA update-in [:dht-keyspace k id] assoc :pinged-at (Thorin.water/now))
+                          (swap! stateA update-in [:dht-keyspace k id] assoc :pinged-at (Thorin.seed/now))
                           (swap! stateA update-in [:dht-keyspace k] dissoc id))))))
            (recur))
 

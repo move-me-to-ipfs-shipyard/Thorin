@@ -6,7 +6,7 @@
      [clojure.string]
      [clojure.java.io :as io]
 
-     [Thorin.water]
+     [Thorin.seed]
      [Thorin.datagram]
      [Thorin.bencode]
      [Thorin.metadata]

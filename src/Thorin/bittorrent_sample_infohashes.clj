@@ -7,7 +7,7 @@
    [clojure.core.async.impl.protocols :refer [closed?]]
    [Thorin.bytes]
    [Thorin.codec]
-   [Thorin.water]))
+   [Thorin.seed]))
 
 (do (set! *warn-on-reflection* true) (set! *unchecked-math* true))
 
@@ -30,7 +30,7 @@
     (go
       (loop [n 4
              i n
-             ts (Thorin.water/now)
+             ts (Thorin.seed/now)
              time-total 0]
         (let [timeout| (when (and (== i 0) (< time-total 1000))
                          (timeout (+ time-total (- 1000 time-total))))
@@ -43,12 +43,12 @@
 
               (= port timeout|)
               (do nil
-                  (recur n n (Thorin.water/now) 0))
+                  (recur n n (Thorin.seed/now) 0))
 
               (or (= port node-from-sampling|) (= port node-to-sample|))
               (let [[id node] value]
                 (swap! stateA update-in [:routing-table-sampled] assoc id (merge node
-                                                                                 {:timestamp (Thorin.water/now)}))
+                                                                                 {:timestamp (Thorin.seed/now)}))
                 (take! (send-krpc-request
                         {:t (Thorin.bytes/random-bytes 4)
                          :y "q"
@@ -62,14 +62,14 @@
                            (let [{:keys [msg host port]} value
                                  {:keys [interval nodes num samples]} (:r msg)]
                              (when samples
-                               (doseq [infohashBA (Thorin.water/decode-samples samples)]
+                               (doseq [infohashBA (Thorin.seed/decode-samples samples)]
                                  #_(println :info_hash (.toString infohashB "hex"))
                                  (put! infohashes-from-sampling| {:infohashBA infohashBA})))
                              (when interval
                                (swap! stateA update-in [:routing-table-sampled id] merge {:interval interval}))
                              (when nodes
-                               (onto-chan! nodes-from-sampling| (Thorin.water/decode-nodes nodes) false))))))
-                (recur n (mod (inc i) n) (Thorin.water/now) (+ time-total (- ts (Thorin.water/now))))))))))))
+                               (onto-chan! nodes-from-sampling| (Thorin.seed/decode-nodes nodes) false))))))
+                (recur n (mod (inc i) n) (Thorin.seed/now) (+ time-total (- ts (Thorin.seed/now))))))))))))
 
 
 
@@ -89,19 +89,19 @@
     (go
       (loop [n 8
              i n
-             ts (Thorin.water/now)
+             ts (Thorin.seed/now)
              time-total 0]
         (when (and (= i 0) (< time-total 2000))
           (a/toggle nodes|mix {nodes-to-sample| {:pause true}})
           (<! (timeout (+ time-total (- 2000 time-total))))
           (a/toggle nodes|mix {nodes-to-sample| {:pause false}})
-          (recur n n (Thorin.water/now) 0))
+          (recur n n (Thorin.seed/now) 0))
         (alt!
           nodes|
           ([node]
            (let []
              (swap! stateA update-in [:routing-table-sampled] assoc (:id node) (merge node
-                                                                                      {:timestamp (Thorin.water/now)}))
+                                                                                      {:timestamp (Thorin.seed/now)}))
              (let [alternative-infohash-targetB (.randomBytes crypto 20)
                    txn-idB (.randomBytes crypto 4)]
                #_(println :sampling-a-node)
@@ -120,7 +120,7 @@
                    (when samples
                      (let [cancel| (chan 1)
                            _ (swap! cancel-channelsA conj cancel|)
-                           infohashes (Thorin.water/decode-samples samples)
+                           infohashes (Thorin.seed/decode-samples samples)
                            _ (doseq [infohashB infohashes]
                                (put! infohash| {:infohashB infohashB
                                                 :rinfo rinfo}))]
@@ -138,7 +138,7 @@
                    #_(when nodes
                        (put! nodes-to-sample| nodes))))))
 
-           (recur n (mod (inc i) n) (Thorin.water/now) (+ time-total (- ts (Thorin.water/now)))))
+           (recur n (mod (inc i) n) (Thorin.seed/now) (+ time-total (- ts (Thorin.seed/now)))))
 
           stop|
           (do :stop)))
