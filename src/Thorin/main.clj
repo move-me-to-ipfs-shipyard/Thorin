@@ -28,7 +28,7 @@
    [Thorin.B12]
    [Thorin.salt]
    [Thorin.bread]
-   [Thorin.raisins]
+   [Thorin.wine]
 
    [Thorin.db :as Thorin.db]
 
@@ -73,7 +73,7 @@
 (defonce ops| (chan 10))
 (def ^:dynamic ^JFrame jframe nil)
 (def ^:dynamic ^JPanel jroot-panel nil)
-(def ^:const jframe-title "i will reclaim peer-to-peer Erebor, like Jesus turns water into raisins")
+(def ^:const jframe-title "i will reclaim peer-to-peer Erebor, like Jesus turns water into wine")
 
 (defonce stateA (atom {:searchS ""}))
 
@@ -159,7 +159,7 @@
             jpanel-B12 (JPanel.)
             jpanel-salt (JPanel.)
             jpanel-bread (JPanel.)
-            jpanel-raisins (JPanel.)]
+            jpanel-wine (JPanel.)]
 
         (doto jtabbed-pane
           (.setTabLayoutPolicy JTabbedPane/SCROLL_TAB_LAYOUT)
@@ -167,7 +167,7 @@
           (.addTab "B12" jpanel-B12)
           (.addTab "salt" jpanel-salt)
           (.addTab "bread" jpanel-bread)
-          (.addTab "raisins" jpanel-raisins)
+          (.addTab "wine" jpanel-wine)
           (.setSelectedComponent jpanel-bread))
 
         (Thorin.bread/process {:jpanel-tab jpanel-bread
@@ -295,7 +295,7 @@
    '[Thorin.B12]
    '[Thorin.salt]
    '[Thorin.bread]
-   '[Thorin.raisins]
+   '[Thorin.wine]
    '[Thorin.main]
    :reload))
 
